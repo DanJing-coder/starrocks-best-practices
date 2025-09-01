@@ -7,9 +7,12 @@ module.exports = {
       collapsed: false,
       items: [
         'cluster-planning',
+        'deploy_checklist',
+        'onboarding',
         'deployment',
+        'configuration',
         'modeling',
-        'jdbc',
+        'connector',
         'usage',
         'monitoring',
         'logs',
