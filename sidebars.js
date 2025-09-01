@@ -15,10 +15,14 @@ module.exports = {
         'connector',
         'usage',
         'monitoring',
-        'logs',
         'inspection',
         'troubleshooting',
       ],
+    },
+    {
+      type: 'category', 
+      label: '数据建模',
+      items: ['modeling'],
     },
   ],
 };
