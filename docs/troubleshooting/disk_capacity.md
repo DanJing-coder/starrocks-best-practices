@@ -16,14 +16,14 @@
 首先，登录到有问题的 BE 节点服务器，确认是哪个磁盘路径空间不足。
 
 *   **查看 BE 配置:**
-    在 `be/conf/be.conf` 文件中，找到 `` `storage_root_path` `` 配置项，它定义了 BE 使用的所有数据存储目录。
+    在 `be/conf/be.conf` 文件中，找到 `storage_root_path` 配置项，它定义了 BE 使用的所有数据存储目录。
     ```properties
     # be.conf
     storage_root_path = /data1/starrocks/be;/data2/starrocks/be
     ```
 
 *   **使用 `df` 命令检查:**
-    使用 `df -h` 命令查看每个挂载点（`` `storage_root_path` `` 对应的路径）的磁盘使用率。
+    使用 `df -h` 命令查看每个挂载点（`storage_root_path` 对应的路径）的磁盘使用率。
     ```bash
     df -h
     ```
@@ -60,7 +60,7 @@ BE 节点在删除数据后，会先将文件移动到 `trash` 目录中，并�
 
 ### 2. 长期方案：扩容与优化
 
-*   **扩容磁盘:** 为 BE 节点增加新的数据盘，并在 `` `storage_root_path` `` 中添加新路径。
+*   **扩容磁盘:** 为 BE 节点增加新的数据盘，并在 `storage_root_path` 中添加新路径。
 *   **扩容节点:** 向集群中添加新的 BE 节点，StarRocks 会自动进行数据均衡，将部分数据迁移到新节点上。
 *   **优化 TTL:** 与业务方沟通，为所有表设置合理的 TTL（通过动态分区），实现数据的自动生命周期管理。
 *   **优化 Compaction:** 如果存在 Compaction 积压，参考 Compaction 原理 章节进行调优。
