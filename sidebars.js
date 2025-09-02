@@ -10,10 +10,9 @@ module.exports = {
           type: 'category',
           label: '规划与部署',
           items: [
-            'cluster-planning',
+            'using_starrocks/cluster-planning',
             'deployment/deploy_checklist',
             'deployment/deployment',
-            'configuration',
           ],
         },
         {
@@ -21,8 +20,9 @@ module.exports = {
           label: '使用与开发',
           items: [
             'using_starrocks/onboarding',
-            'modeling',
-            'connector',
+            'using_starrocks/configuration',
+            'using_starrocks/modeling',
+            'using_starrocks/connector',
             'using_starrocks/usage',
           ],
         },
@@ -32,18 +32,16 @@ module.exports = {
           items: [
             'Monitor/monitoring',
             'Monitor/logs',
-            'inspection',
+            'Monitor/inspection',
           ],
         },
         {
           type: 'category',
           label: '故障处理',
-          link: {
-            type: 'doc',
-            id: 'troubleshooting/troubleshooting',
-          },
           items: [
             'troubleshooting/disk_capacity',
+            'troubleshooting/troubleshooting',
+            'troubleshooting/load_reached_timeout',
           ],
         },
       ],
