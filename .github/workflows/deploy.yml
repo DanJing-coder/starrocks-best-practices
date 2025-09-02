@@ -8,6 +8,10 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GH_PAT }}
       - name: Debug Info
         run: |
           echo "PAT is set: ${{ secrets.GH_PAT != '' }}"
