@@ -12,7 +12,7 @@ module.exports = {
           items: [
             'cluster-planning',
             'deployment/deploy_checklist',
-            'deployment',
+            'deployment/deployment',
             'configuration',
           ],
         },
@@ -30,8 +30,8 @@ module.exports = {
           type: 'category',
           label: '运维与监控',
           items: [
-            'monitoring',
-            'logs',
+            'Monitor/monitoring',
+            'Monitor/logs',
             'inspection',
           ],
         },
