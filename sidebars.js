@@ -8,8 +8,6 @@ module.exports = {
       items: [
         // 规划与部署
         'cluster-planning',
-        'deploy_checklist',
-        'deployment',
         'configuration',
         // 使用与开发
         'using_starrocks/onboarding',
