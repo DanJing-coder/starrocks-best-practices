@@ -11,8 +11,8 @@ StarRocks 自身通过 HTTP 接口暴露了丰富的性能指标（Metrics），
 ```mermaid
 graph TD
     subgraph StarRocks Cluster
-        FE1["FE 1<br>(:8030/metrics)"] & FE2["FE 2<br>(:8030/metrics)"] & FE3["FE 3<br>(:8030/metrics)"]
-        BE1["BE 1<br>(:8040/metrics)"] & BE2["BE 2<br>(:8040/metrics)"] & BE3["BE 3<br>(:8040/metrics)"]
+        FE1["FE 1<br />(:8030/metrics)"] & FE2["FE 2<br />(:8030/metrics)"] & FE3["FE 3<br />(:8030/metrics)"]
+        BE1["BE 1<br />(:8040/metrics)"] & BE2["BE 2<br />(:8040/metrics)"] & BE3["BE 3<br />(:8040/metrics)"]
     end
 
     subgraph Monitoring Stack
@@ -45,8 +45,8 @@ graph TD
 *   **BE:** `be/conf/be.conf` -> `enable_metric_calculator = true`
 
 您可以通过访问以下地址来验证指标是否正常暴露：
-*   FE 指标: `http://<fe_ip>:8030/metrics`
-*   BE 指标: `http://<be_ip>:8040/metrics`
+*   FE 指标: `` `http://<fe_ip>:8030/metrics` ``
+*   BE 指标: `` `http://<be_ip>:8040/metrics` ``
 
 ### 步骤二：配置 Prometheus
 

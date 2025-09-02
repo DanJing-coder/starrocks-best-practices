@@ -17,7 +17,7 @@
 - [ ] **专用用户已创建:** 已创建 `starrocks` 用户用于运行进程。
 - [ ] **SELinux 已关闭或设为 Permissive:** 确认 SELinux 状态为 `permissive` 或 `disabled`。
 - [ ] **交换分区 (Swap) 已关闭:** 确认系统已关闭 Swap。
-- [ ] **文件句柄数已调高:** 确认 `ulimit -n` 的值不小于 `655350`。
+- [ ] **文件句柄数已调高:** 确认 `ulimit -n` 的值不小于 `65535`。
 - [ ] **透明大页 (THP) 已关闭:** 确认透明大页（Transparent Huge Pages）已关闭。
 - [ ] **时间同步服务已启用:** 确认所有节点已启用 NTP 或 Chrony 服务并完成时间同步。
 
