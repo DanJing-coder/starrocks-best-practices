@@ -143,10 +143,9 @@ graph TD
 | **负责人及联系方式** | 张三 / zhangsan@example.com |
 | **业务场景描述** | 用于圈选用户、分析用户行为，支撑精准营销 |
 | **数据源** | Kafka Topic: `user_behavior_log`, Hive 表: `ods.user_profile` |
-| **数据体量 (单副本)** | **存量:** 5 TB (Parquet) <br> **日增量:** 约 5 亿行 / 100 GB |
+| **数据体量 (单副本)** | **存量:** 5 TB (Parquet) <br /> **日增量:** 约 5 亿行 / 100 GB |
 | **数据保留周期** | 365 天 |
 | **数据时效性要求** | 用户行为数据要求延迟 < 10 秒 |
 | **查询并发要求** | **高峰 QPS:** 200 <br> **日常 QPS:** 50 |
 | **查询延迟要求** | **简单点查:** P99 < 200ms <br> **复杂圈人:** P99 < 5s |
 | **典型查询 SQL 示例** | 1. `SELECT ... FROM ... WHERE user_id = ?` <br> 2. `SELECT tag, count(1) FROM ... WHERE city IN (...) GROUP BY tag` |
-
