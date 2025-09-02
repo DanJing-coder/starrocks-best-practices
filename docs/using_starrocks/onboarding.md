@@ -70,7 +70,7 @@ graph TD
     *   **主键模型:** 适用于需要实时按主键更新的场景，如 CDC 数据同步。
     *   **聚合模型:** 适用于需要对指标进行预聚合的场景，如固定报表。
     *   **明细模型:** 适用于需要保留所有原始明细数据的场景。
-    *   参考: [数据建模](./modeling.md)
+    *   参考: [数据建模](../modeling.md)
 *   **数据导入方案:**
     *   **实时/流式导入:**
         *   **Flink-Connector-StarRocks:** 推荐方案，提供 Exactly-Once 语义。
@@ -85,7 +85,7 @@ graph TD
 
 #### 3.2 资源规划与申请
 
-根据技术方案和数据体量，参考 [集群规划](./cluster-planning.md) 文档进行资源评估。
+根据技术方案和数据体量，参考 [集群规划](../cluster-planning.md) 文档进行资源评估。
 *   **独立集群 vs. 共享集群:** 对于核心业务或超大规模业务，可考虑独立集群。大多数业务可接入共享集群，通过资源组进行隔离。
 *   **资源申请:** 数据平台团队估算出所需的 CPU、内存、磁盘资源后，由业务方发起资源申请流程。
 
@@ -103,7 +103,7 @@ graph TD
 
 #### 3.3 查询逻辑与应用开发
 
-*   **应用接入:** 业务应用通过 [JDBC](./jdbc.md) 连接 StarRocks。请务必使用连接池（如 Druid, HikariCP）并进行合理配置。
+*   **应用接入:** 业务应用通过 [JDBC](../connector.md#jdbc-连接) 连接 StarRocks。请务必使用连接池（如 Druid, HikariCP）并进行合理配置。
 *   **SQL 开发:** 编写业务查询 SQL。对于复杂查询，使用 `EXPLAIN` 分析执行计划，确保其高效。
 
 #### 3.4 功能与性能测试
@@ -145,7 +145,7 @@ graph TD
 | **数据源** | Kafka Topic: `user_behavior_log`, Hive 表: `ods.user_profile` |
 | **数据体量 (单副本)** | **存量:** 5 TB (Parquet) <br /> **日增量:** 约 5 亿行 / 100 GB |
 | **数据保留周期** | 365 天 |
-| **数据时效性要求** | 用户行为数据要求延迟 < 10 秒 |
-| **查询并发要求** | **高峰 QPS:** 200 <br> **日常 QPS:** 50 |
-| **查询延迟要求** | **简单点查:** P99 < 200ms <br> **复杂圈人:** P99 < 5s |
-| **典型查询 SQL 示例** | 1. `SELECT ... FROM ... WHERE user_id = ?` <br> 2. `SELECT tag, count(1) FROM ... WHERE city IN (...) GROUP BY tag` |
+| **数据时效性要求** | 用户行为数据要求延迟 &lt; 10 秒 |
+| **查询并发要求** | **高峰 QPS:** 200 <br /> **日常 QPS:** 50 |
+| **查询延迟要求** | **简单点查:** P99 &lt; 200ms <br /> **复杂圈人:** P99 &lt; 5s |
+| **典型查询 SQL 示例** | 1. `SELECT ... FROM ... WHERE user_id = ?` <br /> 2. `SELECT tag, count(1) FROM ... WHERE city IN (...) GROUP BY tag` |
