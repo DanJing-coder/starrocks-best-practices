@@ -8,6 +8,11 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Debug Info
+        run: |
+          echo "PAT is set: ${{ secrets.GH_PAT != '' }}"
+          whoami
+          git remote -v
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
@@ -18,9 +23,3 @@ jobs:
         with:
           github_token: ${{ secrets.GH_PAT }}
           publish_dir: ./build
-
-      - name: Debug Info
-        run: |
-          echo "PAT is set: ${{ secrets.GH_PAT != '' }}"
-          whoami
-          git remote -v
