@@ -13,6 +13,7 @@ module.exports = {
             'using_starrocks/cluster-planning',
             'deployment/deploy_checklist',
             'deployment/deployment',
+            'using_starrocks/configuration',
           ],
         },
         {
@@ -20,7 +21,6 @@ module.exports = {
           label: '使用与开发',
           items: [
             'using_starrocks/onboarding',
-            'using_starrocks/configuration',
             'using_starrocks/modeling',
             'using_starrocks/connector',
             'using_starrocks/usage',
@@ -38,9 +38,12 @@ module.exports = {
         {
           type: 'category',
           label: '故障处理',
+          link: {
+            type: 'doc',
+            id: 'troubleshooting/troubleshooting',
+          },
           items: [
             'troubleshooting/disk_capacity',
-            'troubleshooting/troubleshooting',
             'troubleshooting/load_reached_timeout',
           ],
         },
