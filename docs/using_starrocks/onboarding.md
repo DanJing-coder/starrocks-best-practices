@@ -103,7 +103,7 @@ graph TD
 
 #### 3.3 查询逻辑与应用开发
 
-*   **应用接入:** 业务应用通过 [JDBC](./connector.md#jdbc-连接) 连接 StarRocks。请务必使用连接池（如 Druid, HikariCP）并进行合理配置。
+*   **应用接入:** 业务应用通过 [JDBC](../using_starrocks/connector.md#jdbc-连接) 连接 StarRocks。请务必使用连接池（如 Druid, HikariCP）并进行合理配置。
 *   **SQL 开发:** 编写业务查询 SQL。对于复杂查询，使用 `EXPLAIN` 分析执行计划，确保其高效。
 
 #### 3.4 功能与性能测试
