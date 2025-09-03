@@ -4,7 +4,7 @@
 
 ## 1. 硬件与网络
 
-- [ ] **硬件符合规划:** 确认所有节点的硬件配置（CPU、内存、磁盘）符合[集群规划](../cluster-planning.md)章节的要求。
+- [ ] **硬件符合规划:** 确认所有节点的硬件配置（CPU、内存、磁盘）符合[集群规划](../using_starrocks/cluster-planning.md)章节的要求。
 - [ ] **[CPU 指令集支持](https://docs.starrocks.io/zh/docs/deployment/install_manually/#%E6%A3%80%E6%9F%A5%E8%BD%AF%E7%A1%AC%E4%BB%B6%E7%8E%AF%E5%A2%83):** 确认 CPU 支持 **AVX2 和 sse4_2** 指令集。这是保证 StarRocks 向量化引擎发挥极致性能的前提。
     ```bash
     # 检查 AVX2
