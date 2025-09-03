@@ -57,6 +57,11 @@ module.exports = {
         'principles/query_processing',
         'principles/data_ingestion',
         'principles/compaction',
+        'principles/optimizer',
+        'principles/hash_join',
+        'principles/join_reorder',
+        'principles/runtime_filter',
+        'principles/aggrefate_operator'
       ],
     },
   ],
