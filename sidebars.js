@@ -61,7 +61,7 @@ module.exports = {
         'principles/hash_join',
         'principles/join_reorder',
         'principles/runtime_filter',
-        'principles/aggrefate_operator'
+        'principles/aggregate_operator'
       ],
     },
   ],
