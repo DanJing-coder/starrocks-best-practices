@@ -8,64 +8,62 @@ StarRocks 的日志是排查问题、性能调优和安全审计的宝贵资源�
 
 ### 1.1 使用 Audit Loader 插件 (推荐)
 
-分析审计日志的最佳方式是使用 StarRocks 内置的 `audit_loader` 插件，它可以自动、实时地将审计日志导入到 StarRocks 表中，实现日志的即时分析。
+分析审计日志的最佳方式是使用 `audit_loader` 插件。它可以自动、实时地将审计日志导入到 StarRocks 表中，实现日志的即时分析。
 
 #### 步骤 1: 创建审计日志表
 
-官方推荐使用以下表结构，它内置了动态分区，可以自动管理日志数据。
+官方推荐使用以下表结构。它内置了动态分区，可以自动管理日志数据。
 
 ```sql
-CREATE DATABASE IF NOT EXISTS starrocks_audit_db;
-USE starrocks_audit_db;
+CREATE DATABASE starrocks_audit_db__;
 
-CREATE TABLE IF NOT EXISTS `fe_audit_log` (
-    `query_id` varchar(48) NOT NULL COMMENT "Unique query id",
-    `time` datetime NOT NULL COMMENT "Request time",
-    `client_ip` varchar(32) NULL COMMENT "Client IP",
-    `user` varchar(64) NULL COMMENT "User name",
-    `db` varchar(256) NULL COMMENT "Database",
-    `state` varchar(8) NULL COMMENT "Statement execution state",
-    `error_code` int(11) NULL COMMENT "Error code",
-    `error_message` varchar(1024) NULL COMMENT "Error message",
-    `query_time` bigint(20) NULL COMMENT "Query execution time in ms",
-    `scan_bytes` bigint(20) NULL COMMENT "Total scan bytes of this query",
-    `scan_rows` bigint(20) NULL COMMENT "Total scan rows of this query",
-    `return_rows` bigint(20) NULL COMMENT "Returned rows",
-    `stmt_id` int(11) NULL COMMENT "Statement id",
-    `is_query` tinyint(1) NULL COMMENT "Is this a query statement",
-    `frontend_ip` varchar(32) NOT NULL COMMENT "Frontend ip of this request",
-    `cpu_cost_ns` bigint(20) NULL COMMENT "cpu cost in nanoseconds",
-    `mem_cost_bytes` bigint(20) NULL COMMENT "memory cost in bytes",
-    `stmt` varchar(1048576) NULL COMMENT "Statement"
-) ENGINE=OLAP
-DUPLICATE KEY(`query_id`, `time`, `client_ip`)
-PARTITION BY range(time) ()
-DISTRIBUTED BY HASH(`query_id`) BUCKETS 3
+CREATE TABLE starrocks_audit_db__.starrocks_audit_tbl__ (
+  `queryId` VARCHAR(64) COMMENT "查询的唯一ID",
+  `timestamp` DATETIME NOT NULL COMMENT "查询开始时间",
+  `queryType` VARCHAR(12) COMMENT "查询类型（query, slow_query, connection）",
+  `clientIp` VARCHAR(32) COMMENT "客户端IP",
+  `user` VARCHAR(64) COMMENT "查询用户名",
+  `authorizedUser` VARCHAR(64) COMMENT "用户唯一标识，既user_identity",
+  `resourceGroup` VARCHAR(64) COMMENT "资源组名",
+  `catalog` VARCHAR(32) COMMENT "数据目录名",
+  `db` VARCHAR(96) COMMENT "查询所在数据库",
+  `state` VARCHAR(8) COMMENT "查询状态（EOF，ERR，OK）",
+  `errorCode` VARCHAR(512) COMMENT "错误码",
+  `queryTime` BIGINT COMMENT "查询执行时间（毫秒）",
+  `scanBytes` BIGINT COMMENT "查询扫描的字节数",
+  `scanRows` BIGINT COMMENT "查询扫描的记录行数",
+  `returnRows` BIGINT COMMENT "查询返回的结果行数",
+  `cpuCostNs` BIGINT COMMENT "查询CPU耗时（纳秒）",
+  `memCostBytes` BIGINT COMMENT "查询消耗内存（字节）",
+  `stmtId` INT COMMENT "SQL语句增量ID",
+  `isQuery` TINYINT COMMENT "SQL是否为查询（1或0）",
+  `feIp` VARCHAR(128) COMMENT "执行该语句的FE IP",
+  `stmt` VARCHAR(1048576) COMMENT "SQL原始语句",
+  `digest` VARCHAR(32) COMMENT "慢SQL指纹",
+  `planCpuCosts` DOUBLE COMMENT "查询规划阶段CPU占用（纳秒）",
+  `planMemCosts` DOUBLE COMMENT "查询规划阶段内存占用（字节）",
+  `pendingTimeMs` BIGINT COMMENT "查询在队列中等待的时间（毫秒）",
+  `candidateMVs` VARCHAR(65533) NULL COMMENT "候选物化视图列表",
+  `hitMvs` VARCHAR(65533) NULL COMMENT "命中MV列表",
+  `warehouse` VARCHAR(32) NULL COMMENT "Warehouse 名"
+) ENGINE = OLAP
+DUPLICATE KEY (`queryId`, `timestamp`, `queryType`)
+COMMENT "审计日志表"
+PARTITION BY date_trunc('day', `timestamp`)
 PROPERTIES (
-    "replication_num" = "1", -- 根据集群规模调整副本数，生产环境建议为 3
-    "dynamic_partition.enable" = "true",
-    "dynamic_partition.time_unit" = "DAY",
-    "dynamic_partition.start" = "-30",
-    "dynamic_partition.end" = "3",
-    "dynamic_partition.prefix" = "p",
-    "dynamic_partition.buckets" = "3"
+  "replication_num" = "1",
+  "partition_live_number"="30"
 );
 ```
 
 #### 步骤 2: 配置并启用插件
 
-在**所有 FE 节点**的 `fe/conf/fe.conf` 文件中添加以下配置，指定日志要导入的目标数据库和表。
-
-```properties
-# fe.conf
-audit_loader_enable = true
-audit_loader_url = jdbc:mysql://127.0.0.1:9030
-audit_loader_user = root
-audit_loader_password = 
-audit_loader_db = starrocks_audit_db
-audit_loader_table = fe_audit_log
+```sql
+mysql> INSTALL PLUGIN FROM "/opt/module/starrocks/auditloader.zip";
 ```
-> **注意:** `audit_loader_url` 中的 IP 和端口应指向 FE 自身或 FE 集群的 VIP。
+
+具体参考 [审计日志插件安装](https://docs.starrocks.io/zh/docs/administration/management/audit_loader/)
+
 
 #### 步骤 3: 重启所有 FE 节点
 
