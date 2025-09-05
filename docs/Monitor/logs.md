@@ -82,18 +82,18 @@ SELECT * FROM starrocks_audit_db__.starrocks_audit_tbl__  LIMIT 10;
 
     *   **查找 Top 10 慢查询:**
         ```sql
-        SELECT query_time, user, client_ip, stmt
-        FROM starrocks_audit_db.fe_audit_log
-        WHERE is_query = 1
-        ORDER BY query_time DESC
+        SELECT queryTime, user, clientIp, stmt
+        FROM starrocks_audit_db__.starrocks_audit_tbl__
+        WHERE isQuery = 1
+        ORDER BY queryTime DESC
         LIMIT 10;
         ```
     *   **查找扫描数据量最大的查询:**
         ```sql
-        SELECT scan_bytes, user, db, stmt
-        FROM starrocks_audit_db.fe_audit_log
-        WHERE is_query = 1
-        ORDER BY scan_bytes DESC
+        SELECT scanBytes, user, db, stmt
+        FROM starrocks_audit_db__.starrocks_audit_tbl__
+        WHERE isQuery = 1
+        ORDER BY scanBytes DESC
         LIMIT 10;
         ```
     *   **分析查询失败率:**
@@ -101,7 +101,7 @@ SELECT * FROM starrocks_audit_db__.starrocks_audit_tbl__  LIMIT 10;
         SELECT
             state,
             count(*) AS error_count
-        FROM starrocks_audit_db.fe_audit_log
+        FROM starrocks_audit_db__.starrocks_audit_tbl__
         WHERE state = 'ERR'
         GROUP BY state;
         ```
