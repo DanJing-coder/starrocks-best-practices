@@ -9,8 +9,6 @@
     ```bash
     # 检查 AVX2
     cat /proc/cpuinfo | grep avx2
-    # 检查 sse4_2
-    cat /proc/cpuinfo | grep sse4_2
     ```
     > **验证:** 如果以上两条命令均有输出，则表示 CPU 支持。
 

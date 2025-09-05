@@ -24,6 +24,7 @@ module.exports = {
             'using_starrocks/modeling',
             'using_starrocks/connector',
             'using_starrocks/usage',
+            'using_starrocks/materialized_view'
           ],
         },
         {

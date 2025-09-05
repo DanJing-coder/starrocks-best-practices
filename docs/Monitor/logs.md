@@ -140,8 +140,8 @@ graph TD
     ```sql
     CREATE TABLE cluster_logs (
         log_time DATETIME,
-        component VARCHAR(10), -- 'fe' or 'be'
         hostname VARCHAR(128),
+        component VARCHAR(10), -- 'fe' or 'be'
         log_level VARCHAR(10),
         thread_info VARCHAR(128), -- thread name for fe, thread id for be
         source_location VARCHAR(256), -- class:line for fe, file:line for be
@@ -266,19 +266,20 @@ graph TD
     ```sql
     CREATE ROUTINE LOAD load_cluster_logs ON cluster_logs
     COLUMNS (
-        log_time = from_unixtime(cast(json_extract_scalar(json, '$.time') as bigint) / 1000),
-        component = json_extract_scalar(json, '$.component'),
-        hostname = json_extract_scalar(json, '$.hostname'),
-        log_level = json_extract_scalar(json, '$.level'),
-        thread_info = json_extract_scalar(json, '$.thread_info'),
-        source_location = json_extract_scalar(json, '$.source_location'),
-        message = json_extract_scalar(json, '$.message')
+        ts_ms,
+        component,
+        hostname,
+        log_level,
+        thread_info,
+        source_location,
+        message,
+        log_time = from_unixtime(cast(ts_ms AS bigint) / 1000)
     )
     PROPERTIES (
         "format" = "json",
+        "jsonpaths" = "[\"$.time\",\"$.component\",\"$.hostname\",\"$.level\",\"$.thread_info\",\"$.source_location\",\"$.message\"]",
         "max_batch_interval" = "20",
-        "max_batch_rows" = "300000",
-        "max_batch_size" = "209715200"
+        "max_batch_rows" = "300000"
     )
     FROM KAFKA (
         "kafka_broker_list" = "<kafka_broker1>:9092,<kafka_broker2>:9092",
@@ -286,53 +287,151 @@ graph TD
     );
     ```
 
-#### 方案二：使用 Logstash (功能强大)
+#### 方案二：使用 Filebeat (ELK 生态首选)
 
-Logstash 是一个功能非常强大的数据处理管道，拥有极其丰富的插件生态。如果您的团队已经在使用 Elastic Stack，或者对日志有更复杂的过滤、转换和丰富化需求，Logstash 是一个很好的选择。
+Filebeat 是 Elastic Stack 中的官方数据采集工具，它非常轻量、稳定，是作为日志采集代理部署在每个节点上的绝佳选择。如果您的团队已经在使用 ELK 生态，Filebeat 是无缝集成的首选。
 
 1.  **创建 StarRocks 日志存储表:** 同方案一。
 
-2.  **配置 Logstash (在每个 FE/BE 节点)**
-    创建一个 `logstash.conf` 文件来定义输入、过滤和输出。
+2.  **配置 Filebeat (在每个 FE/BE 节点)**
 
-    ```conf
-    # logstash.conf
-    input {
-      file {
-        path => "/path/to/starrocks/be/log/be.INFO"
-        start_position => "beginning"
-        # 使用 multiline codec 处理 Java 堆栈信息
-        codec => multiline {
-          pattern => "^%{TIMESTAMP_ISO8601}"
-          negate => true
-          what => "previous"
-        }
-      }
-    }
+    *   **步骤 a: 安装 Filebeat**
 
-    filter {
-      # 使用 grok 解析结构化日志行
-      grok {
-        match => { "message" => "^%{TIMESTAMP_ISO8601:log_time}\s+%{LOGLEVEL:log_level}\s+\[%{DATA:thread_name}\]\s+%{GREEDYDATA:msg}" }
-        # 将解析出的字段添加到事件顶层
-        add_field => { "hostname" => "%{host}" }
-      }
-    }
 
-    output {
-      kafka {
-        bootstrap_servers => "<kafka_broker1>:9092,<kafka_broker2>:9092"
-        topic_id => "starrocks_be_logs"
-        codec => json
-      }
-    }
+        **使用二进制包安装 (推荐):**
+        ```bash
+        # 下载并安装 (以 7.x 版本为例)
+        curl -L -O https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.17.10-linux-x86_64.tar.gz
+        tar xzvf filebeat-7.17.10-linux-x86_64.tar.gz
+        cd filebeat-7.17.10-linux-x86_64/
+        ```
+
+        **使用 YUM/APT 安装 (备选):**
+        ```bash
+        # CentOS/RHEL
+        sudo rpm --import https://artifacts.elastic.co/GPG-KEY-elasticsearch
+        sudo tee /etc/yum.repos.d/elastic-7.x.repo > /dev/null <<'EOF
+        [elastic-7.x]
+        name=Elastic repository for 7.x packages
+        baseurl=https://artifacts.elastic.co/packages/7.x/yum
+        gpgcheck=1
+        gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch
+        enabled=1
+        autorefresh=1
+        type=rpm-md
+        EOF'
+        sudo yum install -y filebeat
+
+        # Ubuntu/Debian
+        wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+        sudo apt-get install apt-transport-https
+        echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-7.x.list
+        sudo apt-get update && sudo apt-get install filebeat
+        ```
+
+    *   **步骤 b: 创建配置文件 (`filebeat.yml`)**
+        为了让 Filebeat 的输出尽可能地与 Fluent Bit 对齐，我们使用 `grok` 处理器来精确解析日志
+
+        ```yaml
+        # filebeat.yml
+        filebeat.inputs:
+        - type: log
+            enabled: true
+            paths:
+            - /path/to/starrocks/be/log/be.INFO
+            tags: ["be_log"]
+            multiline.type: pattern
+            multiline.pattern: '^[IWEF]'
+            multiline.negate: true
+            multiline.match: after
+            processors:
+            - if:
+                contains:
+                    tags: "be_log"
+                then:
+                - dissect:
+                    tokenizer: "%{level}%{date} %{time} %{thread_info} %{source_location}] %{message}"
+                    field: "message"
+                    target_prefix: ""
+
+        - type: log
+            enabled: true
+            paths:
+            - /path/to/starrocks/fe/log/fe.log
+            tags: ["fe_log"]
+            multiline.type: pattern
+            multiline.pattern: '^\d{4}-\d{2}-\d{2}'
+            multiline.negate: true
+            multiline.match: after
+            processors:
+            - if:
+                contains:
+                    tags: "fe_log"
+                then:
+                - dissect:
+                    tokenizer: "%{log_time} %{+log_time} %{level} (%{thread_info}) [%{source_location}] %{message}"
+                    field: "message"
+                    target_prefix: ""
+
+        # 全局 processors
+        processors:
+        - rename:
+            fields:
+                - from: "msg"
+                to: "message"
+                - from: "host.name"
+                to: "hostname"
+            ignore_missing: true
+        - drop_fields:
+            fields: ["agent", "ecs", "input", "log", "@metadata", "tags", "@timestamp"]
+            ignore_missing: true
+
+        # 输出到 Kafka
+        output.kafka:
+        hosts: ["<kafka_broker1>:9092","<kafka_broker2>:9092"]
+        topic: "starrocks_cluster_logs"
+        codec.json:
+            pretty: false
+        ```
+        > **配置说明:**
+        > * **multiline:** Filebeat 的多行配置可以将 Java 堆栈等信息合并到一条日志事件中。
+        > * **fields_under_root:** 将自定义的 `component` 字段提升到 JSON 的根级别。
+        > * **processors.grok:** 使用 `grok` 处理器和正则表达式来精确解析日志行，提取关键字段。
+        > * **processors.rename/drop_fields:** 清理和重命名字段，使输出格式与目标表结构对齐。
+        > * **output.kafka:** 将采集和处理后的日志事件以 JSON 格式发送到 Kafka。
+
+    *   **步骤 c: 启动 Filebeat**
+        ```bash
+        # 如果使用二进制包安装
+        ./filebeat -e -c filebeat.yml
+
+        # 如果使用 YUM/APT 安装
+        sudo systemctl start filebeat
+        sudo systemctl enable filebeat
+        ```
+
+3.  **创建 Routine Load 任务**
+    由于我们在 Filebeat 中已经完成了日志的解析和格式化，Routine Load 的定义变得非常简单直观。
+    ```sql
+    CREATE ROUTINE LOAD load_cluster_logs_filebeat ON cluster_logs
+    COLUMNS (
+        log_time = log_time_str, -- StarRocks 会自动将字符串转换为 DATETIME
+        hostname,
+        component,
+        log_level = level, -- 将 JSON 中的 level 字段映射到表的 log_level 列
+        thread_info,
+        source_location,
+        message
+    )
+    PROPERTIES (
+        "format" = "json",
+        "jsonpaths" = "[\"$.log_time_str\",\"$.hostname\",\"$.component\",\"$.level\",\"$.thread_info\",\"$.source_location\",\"$.message\"]"
+    )
+    FROM KAFKA (
+        "kafka_broker_list" = "<kafka_broker1>:9092,<kafka_broker2>:9092",
+        "kafka_topic" = "starrocks_cluster_logs"
+    );
     ```
-    > **配置说明:**
-    > * **input.file:** 使用 `multiline` codec 来合并以时间戳开头的日志行，有效处理多行堆栈。
-    > * **filter.grok:** 使用 `grok` 插件和正则表达式来解析日志，提取出 `log_time`, `log_level`, `thread_name` 等关键字段。
-    > * **output.kafka:** 将处理和格式化后的 JSON 数据发送到指定的 Kafka 主题。
-
-3.  **创建 Routine Load 任务:** 同方案一。
 
 ### 2.3 使用 SQL 进行日志分析
     现在，您可以用强大的 SQL 来代替 `grep` 和 `awk`。
