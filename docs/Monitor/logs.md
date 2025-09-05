@@ -73,7 +73,7 @@ mysql> INSTALL PLUGIN FROM "/opt/module/starrocks/auditloader.zip";
 
 等待片刻后，查询审计日志表，如果能看到数据，则表示插件工作正常。
 ```sql
-SELECT * FROM starrocks_audit_db.fe_audit_log LIMIT 10;
+SELECT * FROM starrocks_audit_db__.starrocks_audit_tbl__  LIMIT 10;
 ```
 
 ### 1.2 SQL 分析示例
