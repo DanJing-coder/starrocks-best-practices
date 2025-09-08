@@ -59,6 +59,14 @@ module.exports = {
             'troubleshooting/load_reached_timeout',
           ],
         },
+        {
+          type: 'category',
+          label: '集群治理',
+          items: [
+            'governance/tablet',
+            'governance/query_governance',
+          ],
+        },
       ],
     },
     {

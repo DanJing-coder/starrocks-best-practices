@@ -13,7 +13,7 @@
 *   **存储配置**: 部署时需要配置远端存储信息，如对象存储的 Bucket、Endpoint、Access Key/Secret Key 等。
 
 StarRocks 官方文档提供了详细的存算分离部署指南，请参考：
-[**StarRocks 存算分离部署文档**](https://docs.starrocks.io/zh/docs/deployment/shared_data_deployment/)
+[**StarRocks 存算分离部署文档**](https://docs.starrocks.io/docs/deployment/shared_data/)
 
 ## 使用 Mirrorship Manager 部署 (企业版)
 
