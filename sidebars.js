@@ -11,8 +11,15 @@ module.exports = {
           label: '规划与部署',
           items: [
             'using_starrocks/cluster-planning',
-            'deployment/deploy_checklist',
-            'deployment/deployment',
+            {
+              type: 'category',
+              label: '部署',
+              items: [
+                'deployment/deploy_checklist',
+                'deployment/shared_data',
+                'deployment/shared_nothing',
+              ]
+            },
             'using_starrocks/configuration',
           ],
         },
