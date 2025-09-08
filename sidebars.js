@@ -14,6 +14,10 @@ module.exports = {
             {
               type: 'category',
               label: '部署',
+              link: {
+                type: 'doc',
+                id: 'deployment/deployment',
+              },
               items: [
                 'deployment/deploy_checklist',
                 'deployment/shared_data',
