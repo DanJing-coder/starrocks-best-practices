@@ -1,7 +1,3 @@
----
-sidebar_position: 1
----
-
 # 部署
 
 部署 StarRocks 集群主要分为以下几个步骤：
