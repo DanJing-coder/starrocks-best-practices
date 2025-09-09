@@ -30,6 +30,10 @@ module.exports = {
         {
           type: 'category',
           label: '使用与开发',
+          link: {
+            type: 'doc',
+            id: 'using_starrocks/using_starrocks',
+          },
           items: [
             'using_starrocks/onboarding',
             'using_starrocks/modeling',
@@ -41,6 +45,10 @@ module.exports = {
         {
           type: 'category',
           label: '运维与监控',
+          link: {
+            type: 'doc',
+            id: 'Monitor/monitor',
+          },
           items: [
             'Monitor/monitoring',
             'Monitor/logs',
@@ -62,6 +70,10 @@ module.exports = {
         {
           type: 'category',
           label: '集群治理',
+          link: {
+            type: 'doc',
+            id: 'governance/governance',
+          },
           items: [
             'governance/tablet',
             'governance/query_governance',
@@ -70,9 +82,14 @@ module.exports = {
         {
           type: 'category',
           label: '集群管理',
+          link: {
+            type: 'doc',
+            id: 'maintenance/maintenance',
+          },
           items: [
-            'management/scaling_sop',
-            'management/disk_sop',
+            'maintenance/disk_sop',
+            'maintenance/scaling_sop',
+            'maintenance/upgrade',
           ],
         },
       ],
@@ -81,6 +98,10 @@ module.exports = {
       type: 'category',
       label: 'StarRocks 原理',
       collapsed: true,
+      link: {
+        type: 'doc',
+        id: 'principles/principles',
+      },
       items: [
         'principles/query_processing',
         'principles/data_ingestion',
