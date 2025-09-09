@@ -12,6 +12,9 @@ StarRocks 是一款高性能的分析型数据库，为了帮助用户更好地�
 
 本手册是官方文档的补充和提炼，而非替代。对于具体参数的详细解释、所有功能的完整列表以及更深入的底层原理，请务必参考 **[StarRocks 官方文档](https://docs.starrocks.io/zh/docs/introduction/StarRocks_intro/)**。
 
+[StarRocks最佳实践文档网站](https://dba.mirrorship.cn/docs/intro)
+---
+
 ## 📖 内容概览
 
 本系列最佳实践包含以下内容：
