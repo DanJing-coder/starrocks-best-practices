@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="zh-Hans" dir="ltr" class="docs-wrapper plugin-docs plugin-id-default docs-version-current docs-doc-page docs-doc-id-principles/data_ingestion" data-has-hydrated="false">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v3.8.1">
+<title data-rh="true">数据导入原理 | StarRocks 最佳实践手册</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://danjing-coder.github.io/docs/principles/data_ingestion"><meta data-rh="true" property="og:locale" content="zh_Hans"><meta data-rh="true" name="docusaurus_locale" content="zh-Hans"><meta data-rh="true" name="docsearch:language" content="zh-Hans"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="数据导入原理 | StarRocks 最佳实践手册"><meta data-rh="true" name="description" content="高效、稳定地将数据导入 StarRocks 是所有数据分析工作的前提。本章将基于源码分析，深入剖析 StarRocks 数据导入的内部原理，详细介绍从一个导入任务提交到数据最终可见的全过程。"><meta data-rh="true" property="og:description" content="高效、稳定地将数据导入 StarRocks 是所有数据分析工作的前提。本章将基于源码分析，深入剖析 StarRocks 数据导入的内部原理，详细介绍从一个导入任务提交到数据最终可见的全过程。"><link data-rh="true" rel="canonical" href="https://danjing-coder.github.io/docs/principles/data_ingestion"><link data-rh="true" rel="alternate" href="https://danjing-coder.github.io/docs/principles/data_ingestion" hreflang="zh-Hans"><link data-rh="true" rel="alternate" href="https://danjing-coder.github.io/docs/principles/data_ingestion" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"StarRocks 原理","item":"https://danjing-coder.github.io/docs/principles/"},{"@type":"ListItem","position":2,"name":"数据导入原理","item":"https://danjing-coder.github.io/docs/principles/data_ingestion"}]}</script><link rel="stylesheet" href="/assets/css/styles.c70b19cb.css">
+<script src="/assets/js/runtime~main.2d2cb184.js" defer="defer"></script>
+<script src="/assets/js/main.def23d9e.js" defer="defer"></script>
+</head>
+<body class="navigation-with-keyboard">
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;"><defs>
+<symbol id="theme-svg-external-link" viewBox="0 0 24 24"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"/></symbol>
+</defs></svg>
+<script>!function(){var t="light";var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();document.documentElement.setAttribute("data-theme",e||t),document.documentElement.setAttribute("data-theme-choice",e||t)}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="跳到主要内容"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">跳到主要内容</a></div><nav aria-label="主导航" class="theme-layout-navbar navbar navbar--fixed-top"><div class="navbar__inner"><div class="theme-layout-navbar-left navbar__items"><button aria-label="切换导航栏" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/"><b class="navbar__title text--truncate">StarRocks 文档</b></a><a class="navbar__item navbar__link" href="/docs/intro">文档</a></div><div class="theme-layout-navbar-right navbar__items navbar__items--right"><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/docs/intro">intro</a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="system mode" aria-label="切换浅色/暗黑模式（当前为system mode）"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP systemToggleIcon_QzmC"><path fill="currentColor" d="m12 21c4.971 0 9-4.029 9-9s-4.029-9-9-9-9 4.029-9 9 4.029 9 9 9zm4.95-13.95c1.313 1.313 2.05 3.093 2.05 4.95s-0.738 3.637-2.05 4.95c-1.313 1.313-3.093 2.05-4.95 2.05v-14c1.857 0 3.637 0.737 4.95 2.05z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="theme-layout-main main-wrapper mainWrapper_z2l0"><div class="docsWrapper_hBAB"><button aria-label="回到顶部" class="clean-btn theme-back-to-top-button backToTopButton_sjWU" type="button"></button><div class="docRoot_UBD9"><aside class="theme-doc-sidebar-container docSidebarContainer_YfHR"><div class="sidebarViewport_aRkj"><div class="sidebar_njMd"><nav aria-label="文档侧边栏" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/intro">StarRocks 最佳实践指南</a></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="true" href="/docs/using_starrocks/cluster-planning">最佳实践</a></div><ul class="menu__list"><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" tabindex="0" href="/docs/using_starrocks/cluster-planning">规划与部署</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" tabindex="0" href="/docs/using_starrocks">使用与开发</a><button aria-label="展开侧边栏分类 &#x27;使用与开发&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" tabindex="0" href="/docs/Monitor">运维与监控</a><button aria-label="展开侧边栏分类 &#x27;运维与监控&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" tabindex="0" href="/docs/troubleshooting">故障处理</a><button aria-label="展开侧边栏分类 &#x27;故障处理&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" tabindex="0" href="/docs/governance">集群治理</a><button aria-label="展开侧边栏分类 &#x27;集群治理&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" tabindex="0" href="/docs/maintenance">集群管理</a><button aria-label="展开侧边栏分类 &#x27;集群管理&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li></ul></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--active" href="/docs/principles">StarRocks 原理</a><button aria-label="折叠侧边栏分类 &#x27;StarRocks 原理&#x27;" aria-expanded="true" type="button" class="clean-btn menu__caret"></button></div><ul class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/principles/query_processing">查询处理流程</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/docs/principles/data_ingestion">数据导入原理</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/principles/compaction">Compaction 原理</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/principles/optimizer">优化器原理</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/principles/hash_join">Hash Join 原理</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/principles/join_reorder">Join Reorder 原理</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/principles/runtime_filter">Runtime Filter 原理</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/principles/aggregate_operator">聚合算子原理</a></li></ul></li></ul></nav></div></div></aside><main class="docMainContainer_TBSr"><div class="container padding-top--md padding-bottom--lg"><div class="row"><div class="col docItemCol_VOVn"><div class="docItemContainer_Djhp"><article><nav class="theme-doc-breadcrumbs breadcrumbsContainer_Z_bl" aria-label="页面路径"><ul class="breadcrumbs"><li class="breadcrumbs__item"><a class="breadcrumbs__link" href="/docs/principles"><span>StarRocks 原理</span></a></li><li class="breadcrumbs__item breadcrumbs__item--active"><span class="breadcrumbs__link">数据导入原理</span></li></ul></nav><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_ITEo"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">本页总览</button></div><div class="theme-doc-markdown markdown"><header><h1>数据导入原理</h1></header>
+<p>高效、稳定地将数据导入 StarRocks 是所有数据分析工作的前提。本章将基于源码分析，深入剖析 StarRocks 数据导入的内部原理，详细介绍从一个导入任务提交到数据最终可见的全过程。</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="导入流程概述">导入流程概述<a href="#导入流程概述" class="hash-link" aria-label="导入流程概述的直接链接" title="导入流程概述的直接链接">​</a></h2>
+<p>StarRocks 的数据写入流程经过精心设计，旨在支持高并发、高吞吐的实时和批量数据导入，同时保证数据的一致性和查询的实时性。</p>
+<p>以最常用的 Stream Load 为例，一次典型的数据写入流程如下：</p>
+<div></div>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="12-核心概念--各阶段详解--核心概念">1.2 核心概念 +## 各阶段详解 +## 核心概念<a href="#12-核心概念--各阶段详解--核心概念" class="hash-link" aria-label="1.2 核心概念 +## 各阶段详解 +## 核心概念的直接链接" title="1.2 核心概念 +## 各阶段详解 +## 核心概念的直接链接">​</a></h3>
+<ul>
+<li>
+<p>Label: 每个导入任务都有一个用户指定的、在数据库内唯一的 Label。StarRocks 通过 Label 来保证导入任务的幂等性，即使用相同的 Label 重复提交同一个任务，只有第一次会成功，后续的都会被拒绝。这是实现“At-Least-Once”和“Exactly-Once”语义的基础。</p>
+</li>
+<li>
+<p>Coordinator BE: FE 在接收到导入请求后，会选择一个 BE 节点作为协调者。该 BE 负责接收客户端的数据，并将其转发给存储数据副本的其他 BE 节点。</p>
+</li>
+<li>
+<p>事务 (Transaction): StarRocks 的每一次导入都是一个事务。数据首先被写入内存中的 MemTable。只有当所有副本都写入成功后，Coordinator BE 才会向 FE 提交事务。</p>
+</li>
+<li>
+<p>两阶段提交 (2PC): FE 在收到 Commit 请求后，会启动一个内部的两阶段提交协议，确保事务的原子性。</p>
+</li>
+<li>
+<p>版本 (Version) 与 MVCC: StarRocks 采用多版本并发控制 (MVCC) 来实现读写不加锁。每次成功的导入都会生成一个新的数据版本。当 BE 收到“发布版本”指令后，对应版本的数据才对查询可见，这保证了查询只能看到已成功提交的、完整的数据。</p>
+</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="阶段一fe---任务接收与事务准备">阶段一：FE - 任务接收与事务准备<a href="#阶段一fe---任务接收与事务准备" class="hash-link" aria-label="阶段一：FE - 任务接收与事务准备的直接链接" title="阶段一：FE - 任务接收与事务准备的直接链接">​</a></h3>
+<ul>
+<li>
+<ol>
+<li>接收请求与 Label 检查: 客户端向任一 FE 发起导入请求 ，请求中必须包含一个唯一的 Label。FE 收到请求后，首先会检查该 Label 的状态。如果 Label 已存在且状态为 FINISHED，则直接返回成功，实现幂等性；如果 Label 已存在但状态为 LOADING，则拒绝请求。 +## 各阶段详解</li>
+</ol>
+</li>
+<li>
+<ol start="2">
+<li>选择协调者 (Coordinator): FE 从集群中选择一个状态正常、负载较低的 BE 节点作为本次导入的协调者。 +### 阶段一：FE - 任务接收与事务准备</li>
+</ol>
+</li>
+<li>
+<ol start="3">
+<li>重定向: FE 将协调者 BE 的地址返回给客户端，后续的数据传输将由客户端直接与该 BE 进行。</li>
+</ol>
+</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="阶段二be---数据接收与副本写入">阶段二：BE - 数据接收与副本写入<a href="#阶段二be---数据接收与副本写入" class="hash-link" aria-label="阶段二：BE - 数据接收与副本写入的直接链接" title="阶段二：BE - 数据接收与副本写入的直接链接">​</a></h3>
+<ul>
+<li>
+<ol>
+<li>开启事务: 协调者 BE 接收到客户端的数据流后，会向 FE Leader 请求开启一个事务，并获取一个全局唯一的事务 ID (TxnID)。</li>
+</ol>
+</li>
+<li>
+<ol start="2">
+<li>数据分发: 协调者 BE 根据目标表的元数据信息，确定这批数据需要写入哪些 Tablet。然后，它会将数据按 Tablet 副本所在的 BE 节点进行分组，并通过 BRPC 将数据实时转发给对应的 BE 节点。</li>
+</ol>
+</li>
+<li>
+<ol start="3">
+<li>并行写入: 所有持有相关副本的 BE 节点（包括协调者自身）会并行地执行数据写入操作。</li>
+</ol>
+</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="阶段三be---内存处理与落盘">阶段三：BE - 内存处理与落盘<a href="#阶段三be---内存处理与落盘" class="hash-link" aria-label="阶段三：BE - 内存处理与落盘的直接链接" title="阶段三：BE - 内存处理与落盘的直接链接">​</a></h3>
+<ul>
+<li>
+<p>这是数据在 BE 节点内部处理的核心环节，也是 LSM-Tree 架构的体现。</p>
+</li>
+<li>
+<ol>
+<li>写入 MemTable:在每个 BE 节点上，数据首先被写入内存中的 MemTable。MemTable 是一个有序的数据结构（通常是跳表 SkipList），数据在写入时就按照排序键排好序。
+对于主键模型，BE 会先在主键索引中查找是否存在相同的 Key。如果存在，则执行更新（标记旧行删除，插入新行）；如果不存在，则直接插入。</li>
+</ol>
+</li>
+<li>
+<ol start="2">
+<li>写入 WAL (Write-Ahead Log): 在写入 MemTable 的同时，数据操作会被写入一个预写日志（WAL）中。这确保了即使 BE 节点在数据刷盘前宕机，也可以通过回放 WAL 来恢复内存中的数据，保证数据不丢失。</li>
+</ol>
+</li>
+<li>
+<ol start="3">
+<li>刷盘 (Flush):当 MemTable 的大小达到阈值（由 write_buffer_size 参数控制）或经过一定时间后，内存中的数据会被刷写到磁盘上。
+刷盘过程会生成一个全新的、不可变的、有序的数据文件，在 StarRocks 中称为 Rowset。一个 Rowset 包含多个 Segment 文件（列式存储的数据文件）、索引文件等。</li>
+</ol>
+</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="阶段四fe---两阶段提交与版本发布">阶段四：FE - 两阶段提交与版本发布<a href="#阶段四fe---两阶段提交与版本发布" class="hash-link" aria-label="阶段四：FE - 两阶段提交与版本发布的直接链接" title="阶段四：FE - 两阶段提交与版本发布的直接链接">​</a></h3>
+<ul>
+<li>
+<ol>
+<li>副本确认: 当所有 BE 节点都成功将数据写入 MemTable 并完成刷盘（如果需要）后，它们会向协调者 BE 发送确认信息。</li>
+</ol>
+</li>
+<li>
+<ol start="2">
+<li>提交事务: 协调者 BE 在收到所有副本的确认后，会向 FE Leader 发送 Commit 请求，并附上 TxnID。</li>
+</ol>
+</li>
+<li>
+<ol start="3">
+<li>两阶段提交 (2PC)<!-- -->:Commit<!-- --> 阶段: FE Leader 收到 Commit 请求后，会将该事务的状态标记为 COMMITTED，并将这条“提交日志”写入自己的元数据存储（BDB JE）中。
+Publish 阶段: 当“提交日志”被成功同步到大多数 FE Follower 节点（满足 Paxos 协议的多数派要求）后，FE Leader 会向所有参与此次导入的 BE 节点发送 Publish Version 指令。</li>
+</ol>
+</li>
+<li>
+<ol start="4">
+<li>版本生效与可见性<!-- -->:BE<!-- --> 侧版本应用: BE 节点收到 Publish Version 指令后，会原子性地将此次导入生成的 Rowset 所对应的版本号应用到 Tablet 的元数据中。
+FE 侧版本推进: 与此同时，FE 会推进对应 Partition 的 visible_version 到本次事务的版本。一个查询在执行时，会获取它所要扫描的分区的 visible_version，并且只读取版本号小于等于该 visible_version 的数据。
+数据可见: 只有当 FE 推进了 visible_version 之后，这个新版本的数据才正式对外部查询可见。StarRocks 通过这种 FE 和 BE 协同的 MVCC 机制，实现了查询和导入操作的互不阻塞，并保证了查询的快照隔离性。</li>
+</ol>
+</li>
+<li>
+<ol start="5">
+<li>返回成功: 协调者 BE 在收到 FE 的版本发布确认后，向客户端返回导入成功的消息。</li>
+</ol>
+</li>
+</ul></div></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="文件选项卡"><a class="pagination-nav__link pagination-nav__link--prev" href="/docs/principles/query_processing"><div class="pagination-nav__sublabel">上一页</div><div class="pagination-nav__label">查询处理流程</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/docs/principles/compaction"><div class="pagination-nav__sublabel">下一页</div><div class="pagination-nav__label">Compaction 原理</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#导入流程概述" class="table-of-contents__link toc-highlight">导入流程概述</a><ul><li><a href="#12-核心概念--各阶段详解--核心概念" class="table-of-contents__link toc-highlight">1.2 核心概念 +## 各阶段详解 +## 核心概念</a></li><li><a href="#阶段一fe---任务接收与事务准备" class="table-of-contents__link toc-highlight">阶段一：FE - 任务接收与事务准备</a></li><li><a href="#阶段二be---数据接收与副本写入" class="table-of-contents__link toc-highlight">阶段二：BE - 数据接收与副本写入</a></li><li><a href="#阶段三be---内存处理与落盘" class="table-of-contents__link toc-highlight">阶段三：BE - 内存处理与落盘</a></li><li><a href="#阶段四fe---两阶段提交与版本发布" class="table-of-contents__link toc-highlight">阶段四：FE - 两阶段提交与版本发布</a></li></ul></li></ul></div></div></div></div></main></div></div></div></div>
+</body>
+</html>

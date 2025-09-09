@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="zh-Hans" dir="ltr" class="docs-wrapper plugin-docs plugin-id-default docs-version-current docs-doc-page docs-doc-id-principles/aggregate_operator" data-has-hydrated="false">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v3.8.1">
+<title data-rh="true">聚合算子原理 | StarRocks 最佳实践手册</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://danjing-coder.github.io/docs/principles/aggregate_operator"><meta data-rh="true" property="og:locale" content="zh_Hans"><meta data-rh="true" name="docusaurus_locale" content="zh-Hans"><meta data-rh="true" name="docsearch:language" content="zh-Hans"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="聚合算子原理 | StarRocks 最佳实践手册"><meta data-rh="true" name="description" content="聚合（Aggregation）是数据分析中最常见的操作之一。StarRocks 的聚合算子经过了高度优化，能够高效地处理海量数据的 GROUP BY、COUNT(DISTINCT) 等聚合查询。其核心在于根据数据量和基数，自适应地选择不同的聚合策略和数据结构。"><meta data-rh="true" property="og:description" content="聚合（Aggregation）是数据分析中最常见的操作之一。StarRocks 的聚合算子经过了高度优化，能够高效地处理海量数据的 GROUP BY、COUNT(DISTINCT) 等聚合查询。其核心在于根据数据量和基数，自适应地选择不同的聚合策略和数据结构。"><link data-rh="true" rel="canonical" href="https://danjing-coder.github.io/docs/principles/aggregate_operator"><link data-rh="true" rel="alternate" href="https://danjing-coder.github.io/docs/principles/aggregate_operator" hreflang="zh-Hans"><link data-rh="true" rel="alternate" href="https://danjing-coder.github.io/docs/principles/aggregate_operator" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"StarRocks 原理","item":"https://danjing-coder.github.io/docs/principles/"},{"@type":"ListItem","position":2,"name":"聚合算子原理","item":"https://danjing-coder.github.io/docs/principles/aggregate_operator"}]}</script><link rel="stylesheet" href="/assets/css/styles.c70b19cb.css">
+<script src="/assets/js/runtime~main.2d2cb184.js" defer="defer"></script>
+<script src="/assets/js/main.def23d9e.js" defer="defer"></script>
+</head>
+<body class="navigation-with-keyboard">
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;"><defs>
+<symbol id="theme-svg-external-link" viewBox="0 0 24 24"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"/></symbol>
+</defs></svg>
+<script>!function(){var t="light";var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();document.documentElement.setAttribute("data-theme",e||t),document.documentElement.setAttribute("data-theme-choice",e||t)}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="跳到主要内容"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">跳到主要内容</a></div><nav aria-label="主导航" class="theme-layout-navbar navbar navbar--fixed-top"><div class="navbar__inner"><div class="theme-layout-navbar-left navbar__items"><button aria-label="切换导航栏" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/"><b class="navbar__title text--truncate">StarRocks 文档</b></a><a class="navbar__item navbar__link" href="/docs/intro">文档</a></div><div class="theme-layout-navbar-right navbar__items navbar__items--right"><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/docs/intro">intro</a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="system mode" aria-label="切换浅色/暗黑模式（当前为system mode）"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP systemToggleIcon_QzmC"><path fill="currentColor" d="m12 21c4.971 0 9-4.029 9-9s-4.029-9-9-9-9 4.029-9 9 4.029 9 9 9zm4.95-13.95c1.313 1.313 2.05 3.093 2.05 4.95s-0.738 3.637-2.05 4.95c-1.313 1.313-3.093 2.05-4.95 2.05v-14c1.857 0 3.637 0.737 4.95 2.05z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="theme-layout-main main-wrapper mainWrapper_z2l0"><div class="docsWrapper_hBAB"><button aria-label="回到顶部" class="clean-btn theme-back-to-top-button backToTopButton_sjWU" type="button"></button><div class="docRoot_UBD9"><aside class="theme-doc-sidebar-container docSidebarContainer_YfHR"><div class="sidebarViewport_aRkj"><div class="sidebar_njMd"><nav aria-label="文档侧边栏" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/intro">StarRocks 最佳实践指南</a></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="true" href="/docs/using_starrocks/cluster-planning">最佳实践</a></div><ul class="menu__list"><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" tabindex="0" href="/docs/using_starrocks/cluster-planning">规划与部署</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" tabindex="0" href="/docs/using_starrocks">使用与开发</a><button aria-label="展开侧边栏分类 &#x27;使用与开发&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" tabindex="0" href="/docs/Monitor">运维与监控</a><button aria-label="展开侧边栏分类 &#x27;运维与监控&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" tabindex="0" href="/docs/troubleshooting">故障处理</a><button aria-label="展开侧边栏分类 &#x27;故障处理&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" tabindex="0" href="/docs/governance">集群治理</a><button aria-label="展开侧边栏分类 &#x27;集群治理&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" tabindex="0" href="/docs/maintenance">集群管理</a><button aria-label="展开侧边栏分类 &#x27;集群管理&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li></ul></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--active" href="/docs/principles">StarRocks 原理</a><button aria-label="折叠侧边栏分类 &#x27;StarRocks 原理&#x27;" aria-expanded="true" type="button" class="clean-btn menu__caret"></button></div><ul class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/principles/query_processing">查询处理流程</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/principles/data_ingestion">数据导入原理</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/principles/compaction">Compaction 原理</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/principles/optimizer">优化器原理</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/principles/hash_join">Hash Join 原理</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/principles/join_reorder">Join Reorder 原理</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/principles/runtime_filter">Runtime Filter 原理</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/docs/principles/aggregate_operator">聚合算子原理</a></li></ul></li></ul></nav></div></div></aside><main class="docMainContainer_TBSr"><div class="container padding-top--md padding-bottom--lg"><div class="row"><div class="col docItemCol_VOVn"><div class="docItemContainer_Djhp"><article><nav class="theme-doc-breadcrumbs breadcrumbsContainer_Z_bl" aria-label="页面路径"><ul class="breadcrumbs"><li class="breadcrumbs__item"><a class="breadcrumbs__link" href="/docs/principles"><span>StarRocks 原理</span></a></li><li class="breadcrumbs__item breadcrumbs__item--active"><span class="breadcrumbs__link">聚合算子原理</span></li></ul></nav><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_ITEo"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">本页总览</button></div><div class="theme-doc-markdown markdown"><header><h1>聚合算子原理</h1></header>
+<p>聚合（Aggregation）是数据分析中最常见的操作之一。StarRocks 的聚合算子经过了高度优化，能够高效地处理海量数据的 <code>GROUP BY</code>、<code>COUNT(DISTINCT)</code> 等聚合查询。其核心在于根据数据量和基数，自适应地选择不同的聚合策略和数据结构。</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="1-聚合的阶段">1. 聚合的阶段<a href="#1-聚合的阶段" class="hash-link" aria-label="1. 聚合的阶段的直接链接" title="1. 聚合的阶段的直接链接">​</a></h2>
+<p>一个分布式的聚合查询通常分为两个阶段：</p>
+<ol>
+<li>
+<p><strong>本地预聚合 (Local Aggregation):</strong></p>
+<ul>
+<li>在每个 BE 数据扫描节点上，数据在本地进行第一轮预聚合。</li>
+<li>这会极大地减少需要通过  网络传输的数据量，是分布式聚合性能的关键。</li>
+<li>例如，一个 <code>GROUP BY city</code> 的查询，每个 BE 节点会先计算出本节点内各个城市的聚合值。</li>
+</ul>
+</li>
+<li>
+<p><strong>最终聚合 (Final Aggregation):</strong></p>
+<ul>
+<li>各个 BE 节点将预聚合的结果通过网络 shuffle 到一个或多个 BE 节点上。</li>
+<li>在这些节点上，对来自不同节点的预聚合结果进行最终的合并，得到最终的聚合结果。</li>
+</ul>
+</li>
+</ol>
+<div></div>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="2-聚合数据结构与策略">2. 聚合数据结构与策略<a href="#2-聚合数据结构与策略" class="hash-link" aria-label="2. 聚合数据结构与策略的直接链接" title="2. 聚合数据结构与策略的直接链接">​</a></h2>
+<p>StarRocks 会根据 <code>GROUP BY</code> Key 的数据类型和基数，智能地选择最优的数据结构来存储聚合的中间结果。</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="21-整型-keyint--array">2.1 整型 Key：<code>Int</code> &amp; <code>Array</code><a href="#21-整型-keyint--array" class="hash-link" aria-label="21-整型-keyint--array的直接链接" title="21-整型-keyint--array的直接链接">​</a></h3>
+<p>当 <code>GROUP BY</code> 的 Key 是整型（如 <code>TINYINT</code>, <code>INT</code>, <code>BIGINT</code>）时，StarRocks 会优先使用数组或哈希表。</p>
+<ul>
+<li><strong><code>Array</code> (数组):</strong>
+<ul>
+<li><strong>适用场景:</strong> 当 Key 的取值范围不大时（例如 <code>GROUP BY gender</code>，只有几个值）。</li>
+<li><strong>工作原理:</strong> StarRocks 会创建一个数组，数组的下标直接对应 Key 的值。这种方式避免了哈希计算和冲突，性能极高。</li>
+</ul>
+</li>
+<li><strong><code>Int</code> (哈希表):</strong>
+<ul>
+<li><strong>适用场景:</strong> 当 Key 的取值范围较大，但实际出现的 Key 基数不高时。</li>
+<li><strong>工作原理:</strong>   使用一个专门为整型优化的哈希表来存储聚合结果。</li>
+</ul>
+</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="22-字符串-keystring--serialized">2.2 字符串 Key：<code>String</code> &amp; <code>Serialized</code><a href="#22-字符串-keystring--serialized" class="hash-link" aria-label="22-字符串-keystring--serialized的直接链接" title="22-字符串-keystring--serialized的直接链接">​</a></h3>
+<p>当 <code>GROUP BY</code> 的 Key 是字符串类型时，处理会更复杂。</p>
+<ul>
+<li><strong><code>String</code> (哈希表):</strong>
+<ul>
+<li><strong>适用场景:</strong> Key 的长度较短，且基数不是特别高。</li>
+<li><strong>工作原理:</strong> 使用一个为字符串优化的哈希表。</li>
+</ul>
+</li>
+<li><strong><code>Serialized</code> (序列化哈希表):</strong>
+<ul>
+<li><strong>适用场景:</strong> 当 <code>GROUP BY</code> 的 Key 包含多个字段，或者包含变长的 <code>VARCHAR</code> 字段时。</li>
+<li><strong>工作原理:</strong> 将多个 Key 字段序列化成一个连续的二进制串，然后将这个二进制串作为哈希表的 Key。这避免了对多个字段分别进行哈希计算和比较，在多列 <code>GROUP BY</code> 场景下性能更优。</li>
+</ul>
+</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="23-低基数优化-lowcardinality">2.3 低基数优化 (<code>LowCardinality</code>)<a href="#23-低基数优化-lowcardinality" class="hash-link" aria-label="23-低基数优化-lowcardinality的直接链接" title="23-低基数优化-lowcardinality的直接链接">​</a></h3>
+<p>当 <code>GROUP BY</code> 的 Key 是字符串类型，但优化器通过统计信息判断其基数非常低时（例如 <code>GROUP BY province</code>），StarRocks 会启用低基数优化。</p>
+<ul>
+<li><strong>工作原理:</strong>
+<ol>
+<li>在内存中为每个不同的字符串 Key 构建一个全局字典，将每个字符串映射为一个从 0 开始的整数 ID。</li>
+<li>在聚合时，使用这些整数 ID 作为 Key，从而将对字符串的聚合操作转化为对整型的聚合操作。</li>
+</ol>
+</li>
+<li><strong>优点:</strong> 极大地提升了低基数字符串的聚合性能，因为它利用了前面提到的、最高效的 <code>Array</code> 聚合方式。</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="3-countdistinct-的优化">3. <code>COUNT(DISTINCT)</code> 的优化<a href="#3-countdistinct-的优化" class="hash-link" aria-label="3-countdistinct-的优化的直接链接" title="3-countdistinct-的优化的直接链接">​</a></h2>
+<p><code>COUNT(DISTINCT)</code> 是一个非常消耗资源的聚合操作。StarRocks 提供了多种优化手段。</p>
+<ul>
+<li>
+<p><strong><code>Bitmap</code>:</strong></p>
+<ul>
+<li><strong>适用场景:</strong> 当去重列是整型，且取值范围不大时。</li>
+<li><strong>工作原理:</strong> 使用位图（Bitmap）数据结构。每个位代表一个数值，如果该数值出现，则将对应的位置为 1。</li>
+<li><strong>优点:</strong> 性能极高，内存占用小，且支持跨节点的高效合并。</li>
+</ul>
+</li>
+<li>
+<p><strong><code>HLL</code> (HyperLogLog):</strong></p>
+<ul>
+<li><strong>适用场景:</strong> 当去重列的基数非常大，或者是非整型时。</li>
+<li><strong>工作原理:</strong> 一种概率性数据结构，可以用极小的内存空间估算超大集合的基数。</li>
+<li><strong>优点:</strong> 内存占用固定且极小。</li>
+<li><strong>缺点:</strong> 结果是估算值，存在一定误差（通常在 1% 左右）。</li>
+</ul>
+</li>
+<li>
+<p><strong><code>EXPLAIN</code> 查看聚合策略:</strong>
+通过 <code>EXPLAIN</code> 命令，可以清晰地看到优化器为聚合算子选择了哪种数据结构和策略。</p>
+<div class="language-text codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#bfc7d5;--prism-background-color:#292d3e"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-text codeBlock_bY9V thin-scrollbar" style="color:#bfc7d5;background-color:#292d3e"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#bfc7d5"><span class="token plain">AGGREGATE (update serialize): `count`(...)</span><br></span><span class="token-line" style="color:#bfc7d5"><span class="token plain">|  ...</span><br></span><span class="token-line" style="color:#bfc7d5"><span class="token plain">|  AGGREGATE (merge serialize): `count`(...)</span><br></span></code></pre></div></div>
+<p>这里的 <code>serialize</code> 就表示优化器选择了序列化的哈希表策略。</p>
+</li>
+</ul>
+<hr>
+<p>参考资料: StarRocks 技术内幕：<a href="https://zhuanlan.zhihu.com/p/592058276" target="_blank" rel="noopener noreferrer">聚合函数实现</a></p></div></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="文件选项卡"><a class="pagination-nav__link pagination-nav__link--prev" href="/docs/principles/runtime_filter"><div class="pagination-nav__sublabel">上一页</div><div class="pagination-nav__label">Runtime Filter 原理</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#1-聚合的阶段" class="table-of-contents__link toc-highlight">1. 聚合的阶段</a></li><li><a href="#2-聚合数据结构与策略" class="table-of-contents__link toc-highlight">2. 聚合数据结构与策略</a><ul><li><a href="#21-整型-keyint--array" class="table-of-contents__link toc-highlight">2.1 整型 Key：<code>Int</code> &amp; <code>Array</code></a></li><li><a href="#22-字符串-keystring--serialized" class="table-of-contents__link toc-highlight">2.2 字符串 Key：<code>String</code> &amp; <code>Serialized</code></a></li><li><a href="#23-低基数优化-lowcardinality" class="table-of-contents__link toc-highlight">2.3 低基数优化 (<code>LowCardinality</code>)</a></li></ul></li><li><a href="#3-countdistinct-的优化" class="table-of-contents__link toc-highlight">3. <code>COUNT(DISTINCT)</code> 的优化</a></li></ul></div></div></div></div></main></div></div></div></div>
+</body>
+</html>

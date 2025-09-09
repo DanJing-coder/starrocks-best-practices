@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkstarrocks_best_practices=self.webpackChunkstarrocks_best_practices||[]).push([[8401],{5601:(s,c,r)=>{r.d(c,{A:()=>a});r(6540);var e=r(8478),t=r(4848);function a(s){return(0,t.jsx)(e.A,{fallback:(0,t.jsx)("div",{}),children:function(){var c=r(6406).A;return(0,t.jsx)(c,Object.assign({},s))}})}}}]);

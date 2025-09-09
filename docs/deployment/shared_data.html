@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-Hans" dir="ltr" class="docs-wrapper plugin-docs plugin-id-default docs-version-current docs-doc-page docs-doc-id-deployment/shared_data" data-has-hydrated="false">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v3.8.1">
+<title data-rh="true">存算分离 (Shared-data) | StarRocks 最佳实践手册</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://danjing-coder.github.io/docs/deployment/shared_data"><meta data-rh="true" property="og:locale" content="zh_Hans"><meta data-rh="true" name="docusaurus_locale" content="zh-Hans"><meta data-rh="true" name="docsearch:language" content="zh-Hans"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="存算分离 (Shared-data) | StarRocks 最佳实践手册"><meta data-rh="true" name="description" content="架构说明"><meta data-rh="true" property="og:description" content="架构说明"><link data-rh="true" rel="canonical" href="https://danjing-coder.github.io/docs/deployment/shared_data"><link data-rh="true" rel="alternate" href="https://danjing-coder.github.io/docs/deployment/shared_data" hreflang="zh-Hans"><link data-rh="true" rel="alternate" href="https://danjing-coder.github.io/docs/deployment/shared_data" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"部署","item":"https://danjing-coder.github.io/docs/deployment/"},{"@type":"ListItem","position":2,"name":"存算分离 (Shared-data)","item":"https://danjing-coder.github.io/docs/deployment/shared_data"}]}</script><link rel="stylesheet" href="/assets/css/styles.c70b19cb.css">
+<script src="/assets/js/runtime~main.2d2cb184.js" defer="defer"></script>
+<script src="/assets/js/main.def23d9e.js" defer="defer"></script>
+</head>
+<body class="navigation-with-keyboard">
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;"><defs>
+<symbol id="theme-svg-external-link" viewBox="0 0 24 24"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"/></symbol>
+</defs></svg>
+<script>!function(){var t="light";var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();document.documentElement.setAttribute("data-theme",e||t),document.documentElement.setAttribute("data-theme-choice",e||t)}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="跳到主要内容"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">跳到主要内容</a></div><nav aria-label="主导航" class="theme-layout-navbar navbar navbar--fixed-top"><div class="navbar__inner"><div class="theme-layout-navbar-left navbar__items"><button aria-label="切换导航栏" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/"><b class="navbar__title text--truncate">StarRocks 文档</b></a><a class="navbar__item navbar__link" href="/docs/intro">文档</a></div><div class="theme-layout-navbar-right navbar__items navbar__items--right"><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/docs/intro">intro</a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="system mode" aria-label="切换浅色/暗黑模式（当前为system mode）"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP systemToggleIcon_QzmC"><path fill="currentColor" d="m12 21c4.971 0 9-4.029 9-9s-4.029-9-9-9-9 4.029-9 9 4.029 9 9 9zm4.95-13.95c1.313 1.313 2.05 3.093 2.05 4.95s-0.738 3.637-2.05 4.95c-1.313 1.313-3.093 2.05-4.95 2.05v-14c1.857 0 3.637 0.737 4.95 2.05z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="theme-layout-main main-wrapper mainWrapper_z2l0"><div class="docsWrapper_hBAB"><button aria-label="回到顶部" class="clean-btn theme-back-to-top-button backToTopButton_sjWU" type="button"></button><div class="docRoot_UBD9"><aside class="theme-doc-sidebar-container docSidebarContainer_YfHR"><div class="sidebarViewport_aRkj"><div class="sidebar_njMd"><nav aria-label="文档侧边栏" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/intro">StarRocks 最佳实践指南</a></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret menu__link--active" role="button" aria-expanded="true" href="/docs/using_starrocks/cluster-planning">最佳实践</a></div><ul class="menu__list"><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret menu__link--active" role="button" aria-expanded="true" tabindex="0" href="/docs/using_starrocks/cluster-planning">规划与部署</a></div><ul class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-3 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/using_starrocks/cluster-planning">集群规划</a></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-3 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--active" tabindex="0" href="/docs/deployment">部署</a><button aria-label="折叠侧边栏分类 &#x27;部署&#x27;" aria-expanded="true" type="button" class="clean-btn menu__caret"></button></div><ul class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-4 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/deployment/deploy_checklist">部署前环境检查清单</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-4 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/docs/deployment/shared_data">存算分离 (Shared-data)</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-4 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/deployment/shared_nothing">存算一体 (Shared-nothing)</a></li></ul></li></ul></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" tabindex="0" href="/docs/using_starrocks">使用与开发</a><button aria-label="展开侧边栏分类 &#x27;使用与开发&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" tabindex="0" href="/docs/Monitor">运维与监控</a><button aria-label="展开侧边栏分类 &#x27;运维与监控&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" tabindex="0" href="/docs/troubleshooting">故障处理</a><button aria-label="展开侧边栏分类 &#x27;故障处理&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" tabindex="0" href="/docs/governance">集群治理</a><button aria-label="展开侧边栏分类 &#x27;集群治理&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" tabindex="0" href="/docs/maintenance">集群管理</a><button aria-label="展开侧边栏分类 &#x27;集群管理&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li></ul></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" href="/docs/principles">StarRocks 原理</a><button aria-label="展开侧边栏分类 &#x27;StarRocks 原理&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li></ul></nav></div></div></aside><main class="docMainContainer_TBSr"><div class="container padding-top--md padding-bottom--lg"><div class="row"><div class="col docItemCol_VOVn"><div class="docItemContainer_Djhp"><article><nav class="theme-doc-breadcrumbs breadcrumbsContainer_Z_bl" aria-label="页面路径"><ul class="breadcrumbs"><li class="breadcrumbs__item"><span class="breadcrumbs__link">最佳实践</span></li><li class="breadcrumbs__item"><span class="breadcrumbs__link">规划与部署</span></li><li class="breadcrumbs__item"><a class="breadcrumbs__link" href="/docs/deployment"><span>部署</span></a></li><li class="breadcrumbs__item breadcrumbs__item--active"><span class="breadcrumbs__link">存算分离 (Shared-data)</span></li></ul></nav><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_ITEo"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">本页总览</button></div><div class="theme-doc-markdown markdown"><header><h1>存算分离 (Shared-data)</h1></header>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="架构说明">架构说明<a href="#架构说明" class="hash-link" aria-label="架构说明的直接链接" title="架构说明的直接链接">​</a></h2>
+<p>自 3.0 版本起，StarRocks 支持存算分离架构。在存算分离的模式下，StarRocks 将数据存储在兼容 S3 协议的对象存储（例如 AWS S3、OSS 以及 MinIO）或 HDFS 中，而本地盘作为热数据缓存，用以加速查询。通过存储计算分离架构，您可以降低存储成本并且优化资源隔离。除此之外，集群的弹性扩展能力也得以加强。在查询命中缓存的情况下，存算分离集群的查询性能与存算一体集群性能一致。</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="部署概述">部署概述<a href="#部署概述" class="hash-link" aria-label="部署概述的直接链接" title="部署概述的直接链接">​</a></h2>
+<p>存算分离集群的部署方式与存算一体类似，主要区别在于：</p>
+<ul>
+<li><strong>计算节点</strong>: 存算分离集群需要部署 <strong>CN (Compute Node)</strong> 节点而非 BE 节点。CN 节点是无状态的，负责计算，不存储数据。</li>
+<li><strong>存储配置</strong>: 部署时需要配置远端存储信息，如对象存储的 Bucket、Endpoint、Access Key/Secret Key 等。</li>
+</ul>
+<p>StarRocks 官方文档提供了详细的存算分离部署指南，请参考：
+<a href="https://docs.starrocks.io/docs/deployment/shared_data/" target="_blank" rel="noopener noreferrer"><strong>StarRocks 存算分离部署文档</strong></a></p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="使用-mirrorship-manager-部署-企业版">使用 Mirrorship Manager 部署 (企业版)<a href="#使用-mirrorship-manager-部署-企业版" class="hash-link" aria-label="使用 Mirrorship Manager 部署 (企业版)的直接链接" title="使用 Mirrorship Manager 部署 (企业版)的直接链接">​</a></h2>
+<p>PDF 文档中详细描述了使用企业版工具 <strong>Mirrorship Manager</strong> 来部署存算分离集群的图形化界面操作。以下是该过程的高度概括：</p>
+<ol>
+<li>
+<p><strong>安装 Mirrorship Manager</strong>:</p>
+<ul>
+<li>下载并解压 <code>Mirrorship-EE-x.x.x.tar.gz</code>。</li>
+<li>执行 <code>install.sh</code> 脚本来生成并启动 Web 服务。</li>
+</ul>
+</li>
+<li>
+<p><strong>访问 Web 界面并初始化配置</strong>:</p>
+<ul>
+<li>通过浏览器访问 Mirrorship Manager 的端口 (默认为 <code>19321</code>)。</li>
+<li><strong>配置 MySQL</strong>: 首次访问需要配置一个 MySQL 数据库，用于存储 Mirrorship Manager 的元数据。</li>
+<li><strong>选择节点</strong>: 批量填入所有需要部署 StarRocks 服务的机器 IP 地址。</li>
+</ul>
+</li>
+<li>
+<p><strong>选择集群类型</strong>:</p>
+<ul>
+<li>在 &quot;安装或迁移&quot; 步骤中，选择 &quot;安装新的集群&quot;。</li>
+<li>在 &quot;集群类  型&quot; 中，选择 &quot;<strong>存算分离</strong>&quot;。</li>
+</ul>
+</li>
+<li>
+<p><strong>配置并安装 FE 节点</strong>:</p>
+<ul>
+<li>配置 FE 的元数据目录 (<code>meta_dir</code>) 和日志目录。</li>
+<li><strong>配置远端存储</strong>: 这是存算分离部署的关键步骤。根据您使用的云厂商或存储类型，选择对应的存储介质类型 (如 AWS S3, OSS, HDFS, MinIO 等)，并填写详细的连接信息，包括：<!-- -->
+<ul>
+<li>存储空间路径 (Bucket / Path)</li>
+<li>地域 (Region)</li>
+<li>连接地址 (Endpoint)</li>
+<li>访问密钥 (Access Key / Secret Key)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>配置并安装 CN 节点</strong>:</p>
+<ul>
+<li>点击 <code>+</code> 添加一个或多个 CN 节点。</li>
+<li>配置每个 CN 节点的安装目录、日志目录和数据缓存目录 (<code>storage_path</code>)。</li>
+</ul>
+</li>
+<li>
+<p><strong>配置并安装 Broker</strong>:</p>
+<ul>
+<li>建议在所有计算节点上都安装 Broker，用于访问外部数据源。</li>
+</ul>
+</li>
+<li>
+<p><strong>配置并安装 Center Service</strong>:</p>
+<ul>
+<li>Center Service 是 Mirrorship Manager 的一部分，负责监控报警等服务。按需配置邮件服务等。</li>
+</ul>
+</li>
+<li>
+<p><strong>完成部署并激活 License</strong>:</p>
+<ul>
+<li>完成所有配置后，开始一键部署。</li>
+<li>部署完成后，页面会提供临时的 <code>root</code> 用户密码。</li>
+<li>首次登录后，需要上传有效的 License 文件来激活集群。</li>
+</ul>
+</li>
+</ol>
+<p><strong>注意</strong>: 以上是根据 PDF 内容对企业版图形化部署流程的摘要。具体的界面截图和每一个配置项的详细说明，请参考 <code>StarRocks 最佳实践之集群部署.pdf</code> 的第 38 页到第 49 页。对于社区版用户，请务必参考上文提供的官方文档链接进行手动部署。</p></div></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="文件选项卡"><a class="pagination-nav__link pagination-nav__link--prev" href="/docs/deployment/deploy_checklist"><div class="pagination-nav__sublabel">上一页</div><div class="pagination-nav__label">部署前环境检查清单</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/docs/deployment/shared_nothing"><div class="pagination-nav__sublabel">下一页</div><div class="pagination-nav__label">存算一体 (Shared-nothing)</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#架构说明" class="table-of-contents__link toc-highlight">架构说明</a></li><li><a href="#部署概述" class="table-of-contents__link toc-highlight">部署概述</a></li><li><a href="#使用-mirrorship-manager-部署-企业版" class="table-of-contents__link toc-highlight">使用 Mirrorship Manager 部署 (企业版)</a></li></ul></div></div></div></div></main></div></div></div></div>
+</body>
+</html>

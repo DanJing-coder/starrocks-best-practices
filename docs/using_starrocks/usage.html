@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="zh-Hans" dir="ltr" class="docs-wrapper plugin-docs plugin-id-default docs-version-current docs-doc-page docs-doc-id-using_starrocks/usage" data-has-hydrated="false">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v3.8.1">
+<title data-rh="true">集群使用规范 | StarRocks 最佳实践手册</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://danjing-coder.github.io/docs/using_starrocks/usage"><meta data-rh="true" property="og:locale" content="zh_Hans"><meta data-rh="true" name="docusaurus_locale" content="zh-Hans"><meta data-rh="true" name="docsearch:language" content="zh-Hans"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="集群使用规范 | StarRocks 最佳实践手册"><meta data-rh="true" name="description" content="为了保障 StarRocks 集群的稳定性、性能和多租户环境下的公平性，所有用户都应遵循本章提出的使用规范。这些规范涵盖了数据导入、查询编写和日常操作等多个方面，旨在帮助您更高效、更安全地使用 StarRocks。"><meta data-rh="true" property="og:description" content="为了保障 StarRocks 集群的稳定性、性能和多租户环境下的公平性，所有用户都应遵循本章提出的使用规范。这些规范涵盖了数据导入、查询编写和日常操作等多个方面，旨在帮助您更高效、更安全地使用 StarRocks。"><link data-rh="true" rel="canonical" href="https://danjing-coder.github.io/docs/using_starrocks/usage"><link data-rh="true" rel="alternate" href="https://danjing-coder.github.io/docs/using_starrocks/usage" hreflang="zh-Hans"><link data-rh="true" rel="alternate" href="https://danjing-coder.github.io/docs/using_starrocks/usage" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"使用与开发","item":"https://danjing-coder.github.io/docs/using_starrocks/"},{"@type":"ListItem","position":2,"name":"集群使用规范","item":"https://danjing-coder.github.io/docs/using_starrocks/usage"}]}</script><link rel="stylesheet" href="/assets/css/styles.c70b19cb.css">
+<script src="/assets/js/runtime~main.2d2cb184.js" defer="defer"></script>
+<script src="/assets/js/main.def23d9e.js" defer="defer"></script>
+</head>
+<body class="navigation-with-keyboard">
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;"><defs>
+<symbol id="theme-svg-external-link" viewBox="0 0 24 24"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"/></symbol>
+</defs></svg>
+<script>!function(){var t="light";var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();document.documentElement.setAttribute("data-theme",e||t),document.documentElement.setAttribute("data-theme-choice",e||t)}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="跳到主要内容"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">跳到主要内容</a></div><nav aria-label="主导航" class="theme-layout-navbar navbar navbar--fixed-top"><div class="navbar__inner"><div class="theme-layout-navbar-left navbar__items"><button aria-label="切换导航栏" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/"><b class="navbar__title text--truncate">StarRocks 文档</b></a><a class="navbar__item navbar__link" href="/docs/intro">文档</a></div><div class="theme-layout-navbar-right navbar__items navbar__items--right"><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/docs/intro">intro</a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="system mode" aria-label="切换浅色/暗黑模式（当前为system mode）"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP systemToggleIcon_QzmC"><path fill="currentColor" d="m12 21c4.971 0 9-4.029 9-9s-4.029-9-9-9-9 4.029-9 9 4.029 9 9 9zm4.95-13.95c1.313 1.313 2.05 3.093 2.05 4.95s-0.738 3.637-2.05 4.95c-1.313 1.313-3.093 2.05-4.95 2.05v-14c1.857 0 3.637 0.737 4.95 2.05z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="theme-layout-main main-wrapper mainWrapper_z2l0"><div class="docsWrapper_hBAB"><button aria-label="回到顶部" class="clean-btn theme-back-to-top-button backToTopButton_sjWU" type="button"></button><div class="docRoot_UBD9"><aside class="theme-doc-sidebar-container docSidebarContainer_YfHR"><div class="sidebarViewport_aRkj"><div class="sidebar_njMd"><nav aria-label="文档侧边栏" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/intro">StarRocks 最佳实践指南</a></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret menu__link--active" role="button" aria-expanded="true" href="/docs/using_starrocks/cluster-planning">最佳实践</a></div><ul class="menu__list"><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" tabindex="0" href="/docs/using_starrocks/cluster-planning">规划与部署</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--active" tabindex="0" href="/docs/using_starrocks">使用与开发</a><button aria-label="折叠侧边栏分类 &#x27;使用与开发&#x27;" aria-expanded="true" type="button" class="clean-btn menu__caret"></button></div><ul class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-3 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/using_starrocks/onboarding">StarRocks 业务接入方案</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-3 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/using_starrocks/modeling">数据建模</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-3 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/using_starrocks/connector">集群接入与数据导入</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-3 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/docs/using_starrocks/usage">集群使用规范</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-3 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/using_starrocks/materialized_view">StarRocks 最佳实践之物化视图</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-3 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/using_starrocks/configuration">集群配置</a></li></ul></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" tabindex="0" href="/docs/Monitor">运维与监控</a><button aria-label="展开侧边栏分类 &#x27;运维与监控&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" tabindex="0" href="/docs/troubleshooting">故障处理</a><button aria-label="展开侧边栏分类 &#x27;故障处理&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" tabindex="0" href="/docs/governance">集群治理</a><button aria-label="展开侧边栏分类 &#x27;集群治理&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" tabindex="0" href="/docs/maintenance">集群管理</a><button aria-label="展开侧边栏分类 &#x27;集群管理&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li></ul></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" href="/docs/principles">StarRocks 原理</a><button aria-label="展开侧边栏分类 &#x27;StarRocks 原理&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li></ul></nav></div></div></aside><main class="docMainContainer_TBSr"><div class="container padding-top--md padding-bottom--lg"><div class="row"><div class="col docItemCol_VOVn"><div class="docItemContainer_Djhp"><article><nav class="theme-doc-breadcrumbs breadcrumbsContainer_Z_bl" aria-label="页面路径"><ul class="breadcrumbs"><li class="breadcrumbs__item"><span class="breadcrumbs__link">最佳实践</span></li><li class="breadcrumbs__item"><a class="breadcrumbs__link" href="/docs/using_starrocks"><span>使用与开发</span></a></li><li class="breadcrumbs__item breadcrumbs__item--active"><span class="breadcrumbs__link">集群使用规范</span></li></ul></nav><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_ITEo"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">本页总览</button></div><div class="theme-doc-markdown markdown"><header><h1>集群使用规范</h1></header>
+<p>为了保障 StarRocks 集群的稳定性、性能和多租户环境下的公平性，所有用户都应遵循本章提出的使用规范。这些规范涵盖了数据导入、查询编写和日常操作等多个方面，旨在帮助您更高效、更安全地使用 StarRocks。</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="1-数据导入规范">1. 数据导入规范<a href="#1-数据导入规范" class="hash-link" aria-label="1. 数据导入规范的直接链接" title="1. 数据导入规范的直接链接">​</a></h2>
+<p>不合理的导入策略是导致集群性能问题（尤其是 Compaction 压力过大）的最常见原因。</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="11-避免高频小批量导入">1.1 避免高频小批量导入<a href="#11-避免高频小批量导入" class="hash-link" aria-label="1.1 避免高频小批量导入的直接链接" title="1.1 避免高频小批量导入的直接链接">​</a></h3>
+<ul>
+<li><strong>核心原则:</strong> <strong>“合并批次，降低频率”</strong>。</li>
+<li><strong>主键模型:</strong> 严禁进行毫秒级的持续导入。高频写入会产生大量的小版本文件，给后台 Compaction 带来巨大压力，导致 CPU 和 I/O 飙升。<!-- -->
+<ul>
+<li><strong>推荐实践:</strong> 在上游（如 Flink）进行微批处理，将导入频率控制在<strong>秒级</strong>（例如 3-5 秒一次），并确保每个批次有一定的数据量（如数万行）。</li>
+</ul>
+</li>
+<li><strong>Stream Load:</strong> 避免将一个大文件拆分成成百上千个小的 Stream Load 任务。应尽可能将数据合并后，通过一次 Stream Load 任务导入。</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="12-使用唯一的导入标签-label">1.2 使用唯一的导入标签 (Label)<a href="#12-使用唯一的导入标签-label" class="hash-link" aria-label="1.2 使用唯一的导入标签 (Label)的直接链接" title="1.2 使用唯一的导入标签 (Label)的直接链接">​</a></h3>
+<ul>
+<li><strong>核心原则:</strong> 为每一个导入任务都生成一个唯一的、有意义的 <code>Label</code>。</li>
+<li><strong>作用:</strong>
+<ul>
+<li><strong>幂等性保证:</strong> StarRocks 通过 Label 来防止数据重复导入。使用相同的 Label 重复提交任务，只有第一次会成功。</li>
+<li><strong>问题排查:</strong> 出现导入问题时，可以通过 <code>SHOW LOAD WHERE LABEL = &#x27;...&#x27;</code> 快速定位到具体的任务并查看错误信息。</li>
+</ul>
+</li>
+<li><strong>推荐实践:</strong> Label 可以设计为 <code>业务名_表名_时间戳</code> 的格式，例如 <code>my_app_orders_20231122180000</code>。</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="13-关注数据质量">1.3 关注数据质量<a href="#13-关注数据质量" class="hash-link" aria-label="1.3 关注数据质量的直接链接" title="1.3 关注数据质量的直接链接">​</a></h3>
+<ul>
+<li><strong>核心原则:</strong> 尽可能在数据源头或 ETL 阶段保证数据质量。</li>
+<li><strong><code>max_filter_ratio</code>:</strong> 这个参数允许导入一定比例的“脏数据”（格式错误、类型不匹配等）。虽然方便，但过度依赖会导致性能下降，因为 BE 需要花费额外资源来处理错误。</li>
+<li><strong>推荐实践:</strong> 生产环境的 <code>max_filter_ratio</code> 建议设置为 <code>0</code>。当出现导入错误时，应根据错误日志 (<code>ErrorURL</code>) 定位并清洗源头数据，而不是简单地调大过滤比例。</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="2-查询规范">2. 查询规范<a href="#2-查询规范" class="hash-link" aria-label="2. 查询规范的直接链接" title="2. 查询规范的直接链接">​</a></h2>
+<p>不规范的 SQL 写法是导致查询缓慢、消耗过多集群资源的主要原因。</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="21-明确指定查询列">2.1 明确指定查询列<a href="#21-明确指定查询列" class="hash-link" aria-label="2.1 明确指定查询列的直接链接" title="2.1 明确指定查询列的直接链接">​</a></h3>
+<ul>
+<li><strong>核心原则:</strong> <strong>严禁使用 <code>SELECT *</code></strong>。</li>
+<li><strong>原因:</strong>
+<ul>
+<li>StarRocks 是列式存储，只读取需要的列可以极大地减少 I/O。</li>
+<li><code>SELECT *</code> 会读取所有列的数据，即使你只使用其中几列，这会造成巨大的资源浪费。</li>
+</ul>
+</li>
+<li><strong>推荐实践:</strong> 在 <code>SELECT</code> 子句中明确列出所有需要查询的字段。</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="22-高效使用过滤条件">2.2 高效使用过滤条件<a href="#22-高效使用过滤条件" class="hash-link" aria-label="2.2 高效使用过滤条件的直接链接" title="2.2 高效使用过滤条件的直接链接">​</a></h3>
+<ul>
+<li><strong>核心原则:</strong> <strong>“尽早过滤，精准过滤”</strong>。</li>
+<li><strong>分区裁剪:</strong> 查询时应尽可能地在 <code>WHERE</code> 子句中带上分区键（通常是时间字段）的过滤条件，以便 StarRocks 能够只扫描相关的分区，跳过大量无关数据。<!-- -->
+<ul>
+<li><strong>反例:</strong> <code>WHERE substring(event_time, 1, 10) = &#x27;2023-11-22&#x27;</code> (无法利用分区)</li>
+<li><strong>正例:</strong> <code>WHERE event_time &gt;= &#x27;2023-11-22 00:00:00&#x27; AND event_time &lt; &#x27;2023-11-23 00:00:00&#x27;</code> (高效利用分区)</li>
+</ul>
+</li>
+<li><strong>排序键前缀过滤:</strong> 将高频过滤字段设计为排序键，并在查询时使用它们，可以利用前缀索引快速定位数据。</li>
+<li><strong>避免在列上使用函数:</strong> 在 <code>WHERE</code> 子句中对列使用函数会导致索引失效。<!-- -->
+<ul>
+<li><strong>反例:</strong> <code>WHERE year(create_time) = 2023</code></li>
+<li><strong>正例:</strong> <code>WHERE create_time &gt;= &#x27;2023-01-01&#x27; AND create_time &lt; &#x27;2024-01-01&#x27;</code></li>
+</ul>
+</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="23-小心处理大数据量-join">2.3 小心处理大数据量 Join<a href="#23-小心处理大数据量-join" class="hash-link" aria-label="2.3 小心处理大数据量 Join的直接链接" title="2.3 小心处理大数据量 Join的直接链接">​</a></h3>
+<ul>
+<li><strong>核心原则:</strong> 理解 Join 的代价，避免笛卡尔积。</li>
+<li><strong>Join 条件:</strong> 确保 <code>ON</code> 子句中的 Join 条件是正确且高效的。检查 Join 列的数据类型是否一致，避免隐式类型转换带来的开销。</li>
+<li><strong>大表 Join 大表:</strong> 两个超大表的 Join 会消耗巨大的内存和 CPU 资源，是性能杀手。<!-- -->
+<ul>
+<li><strong>推荐实践:</strong>
+<ol>
+<li><strong>业务逻辑优化:</strong> 思考是否真的需要全量 Join，能否通过增加过滤条件来减少参与 Join 的数据量。</li>
+<li><strong>数据模型优化:</strong> 考虑是否可以将部分数据预先处理成一张宽表，或者使用物化视图来预计算 Join 结果。</li>
+<li><strong>Colocate Join:</strong> 如果多个大表都使用相同的分桶键，可以启用 Colocate Join，避免数据在节点间重分布（Shuffle），极大提升 Join 性能。</li>
+</ol>
+</li>
+</ul>
+</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="24-使用-explain-分析执行计划">2.4 使用 <code>EXPLAIN</code> 分析执行计划<a href="#24-使用-explain-分析执行计划" class="hash-link" aria-label="24-使用-explain-分析执行计划的直接链接" title="24-使用-explain-分析执行计划的直接链接">​</a></h3>
+<ul>
+<li><strong>核心原则:</strong> 对于任何不符合预期的慢查询，第一步都应该是 <code>EXPLAIN</code>。</li>
+<li><strong>作用:</strong> <code>EXPLAIN</code> 可以展示查询的逻辑计划和物理计划，帮助你理解 StarRocks 是如何执行你的 SQL 的。</li>
+<li><strong>关注点:</strong>
+<ul>
+<li><strong><code>scan</code> 算子:</strong> 查看 <code>predicates</code> 是否被成功下推，<code>partitions</code> 是否被有效裁剪。</li>
+<li><strong><code>join</code> 算子:</strong> 查看 Join 类型（如 <code>HASH_JOIN</code>, <code>BROADCAST_JOIN</code>）和数据交换方式（<code>SHUFFLE</code>, <code>BROADCAST</code>）。</li>
+<li><strong>估算行数:</strong> 检查优化器估算的行数与实际行数是否有巨大偏差，这可能意味着统计信息过时。</li>
+</ul>
+</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="25-小心使用-update-和-delete">2.5 小心使用 UPDATE 和 DELETE<a href="#25-小心使用-update-和-delete" class="hash-link" aria-label="2.5 小心使用 UPDATE 和 DELETE的直接链接" title="2.5 小心使用 UPDATE 和 DELETE的直接链接">​</a></h3>
+<p>StarRocks 的主键模型支持 <code>UPDATE</code> 和 <code>DELETE</code> 操作，但这两种操作在 OLAP 环境中是昂贵的，应谨慎使用。</p>
+<ul>
+<li><strong>适用模型:</strong> <code>UPDATE</code> 和 <code>DELETE</code> 仅对<strong>主键模型</strong>生效。</li>
+<li><strong>性能开销:</strong>
+<ul>
+<li>其底层实现为“先标记删除，再插入新行”(Delete-and-Insert)，会产生新的数据版本并增加 Compaction 压力。</li>
+<li><strong>不适用于高频的事务性更新</strong>。对于需要频繁更新的场景，应优先考虑通过 Flink CDC 等方式进行流式写入。</li>
+</ul>
+</li>
+<li><strong>使用规范:</strong>
+<ul>
+<li><strong>必须带 WHERE 条件:</strong> 为防止误操作，<code>DELETE</code> 和 <code>UPDATE</code> 语句都必须包含 <code>WHERE</code> 子句。</li>
+<li><strong>过滤条件尽量命中主键:</strong> <code>WHERE</code> 条件如果能过滤主键，执行效率最高。如果过滤非主键列，可能会导致大范围的数据扫描，性能较差。</li>
+<li><strong>批量操作:</strong> 尽量将多个小范围的更新或删除合并成一个批次执行，以减少事务开销和版本数量。</li>
+<li><strong>适用场景:</strong>
+<ul>
+<li><strong>数据订正:</strong> 用于修正少量的错误数据。</li>
+<li><strong>低频更新:</strong> 用于更新少量维度信息或状态。</li>
+<li>对于大规模的数据变更，推荐使用 <code>INSERT OVERWRITE</code> 或重新导入数据的方式。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="3-日常操作规范">3. 日常操作规范<a href="#3-日常操作规范" class="hash-link" aria-label="3. 日常操作规范的直接链接" title="3. 日常操作规范的直接链接">​</a></h2>
+<ul>
+<li><strong>DDL 操作:</strong>
+<ul>
+<li><code>ADD COLUMN</code> 等操作是异步的，可以通过 <code>SHOW ALTER TABLE COLUMN</code> 查看进度。</li>
+<li>避免在业务高峰期执行耗时较长的 DDL 操作。</li>
+</ul>
+</li>
+<li><strong>用户与权限:</strong>
+<ul>
+<li>遵循最小权限原则，为不同的业务角色创建不同的用户，并授予其所需的最小权限集。</li>
+<li>不建议在生产环境中使用 <code>root</code> 账号进行日常查询和开发。</li>
+</ul>
+</li>
+<li><strong>会话变量:</strong>
+<ul>
+<li>对于临时的大查询，应在当前会话中使用 <code>SET</code> 命令来调整参数（如 <code>SET exec_mem_limit = ...</code>），而不是修改全局配置，避免影响其他用户。</li>
+</ul>
+</li>
+</ul></div></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="文件选项卡"><a class="pagination-nav__link pagination-nav__link--prev" href="/docs/using_starrocks/connector"><div class="pagination-nav__sublabel">上一页</div><div class="pagination-nav__label">集群接入与数据导入</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/docs/using_starrocks/materialized_view"><div class="pagination-nav__sublabel">下一页</div><div class="pagination-nav__label">StarRocks 最佳实践之物化视图</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#1-数据导入规范" class="table-of-contents__link toc-highlight">1. 数据导入规范</a><ul><li><a href="#11-避免高频小批量导入" class="table-of-contents__link toc-highlight">1.1 避免高频小批量导入</a></li><li><a href="#12-使用唯一的导入标签-label" class="table-of-contents__link toc-highlight">1.2 使用唯一的导入标签 (Label)</a></li><li><a href="#13-关注数据质量" class="table-of-contents__link toc-highlight">1.3 关注数据质量</a></li></ul></li><li><a href="#2-查询规范" class="table-of-contents__link toc-highlight">2. 查询规范</a><ul><li><a href="#21-明确指定查询列" class="table-of-contents__link toc-highlight">2.1 明确指定查询列</a></li><li><a href="#22-高效使用过滤条件" class="table-of-contents__link toc-highlight">2.2 高效使用过滤条件</a></li><li><a href="#23-小心处理大数据量-join" class="table-of-contents__link toc-highlight">2.3 小心处理大数据量 Join</a></li><li><a href="#24-使用-explain-分析执行计划" class="table-of-contents__link toc-highlight">2.4 使用 <code>EXPLAIN</code> 分析执行计划</a></li><li><a href="#25-小心使用-update-和-delete" class="table-of-contents__link toc-highlight">2.5 小心使用 UPDATE 和 DELETE</a></li></ul></li><li><a href="#3-日常操作规范" class="table-of-contents__link toc-highlight">3. 日常操作规范</a></li></ul></div></div></div></div></main></div></div></div></div>
+</body>
+</html>

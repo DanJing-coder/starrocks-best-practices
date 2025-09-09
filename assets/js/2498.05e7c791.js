@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkstarrocks_best_practices=self.webpackChunkstarrocks_best_practices||[]).push([[2498],{2498:(e,s,c)=>{c.d(s,{createArchitectureServices:()=>r.S});var r=c(3009);c(8198)}}]);

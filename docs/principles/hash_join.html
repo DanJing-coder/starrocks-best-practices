@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="zh-Hans" dir="ltr" class="docs-wrapper plugin-docs plugin-id-default docs-version-current docs-doc-page docs-doc-id-principles/hash_join" data-has-hydrated="false">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v3.8.1">
+<title data-rh="true">Hash Join 原理 | StarRocks 最佳实践手册</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://danjing-coder.github.io/docs/principles/hash_join"><meta data-rh="true" property="og:locale" content="zh_Hans"><meta data-rh="true" name="docusaurus_locale" content="zh-Hans"><meta data-rh="true" name="docsearch:language" content="zh-Hans"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Hash Join 原理 | StarRocks 最佳实践手册"><meta data-rh="true" name="description" content="Hash Join 是 StarRocks 中最常用、最高效的 Join 实现方式。它通过构建哈希表，将等值 Join 操作转化为高效的哈希查找，极大地提升了查询性能。理解其内部原理，有助于我们编写更高效的 Join SQL，并诊断相关的性能问题。"><meta data-rh="true" property="og:description" content="Hash Join 是 StarRocks 中最常用、最高效的 Join 实现方式。它通过构建哈希表，将等值 Join 操作转化为高效的哈希查找，极大地提升了查询性能。理解其内部原理，有助于我们编写更高效的 Join SQL，并诊断相关的性能问题。"><link data-rh="true" rel="canonical" href="https://danjing-coder.github.io/docs/principles/hash_join"><link data-rh="true" rel="alternate" href="https://danjing-coder.github.io/docs/principles/hash_join" hreflang="zh-Hans"><link data-rh="true" rel="alternate" href="https://danjing-coder.github.io/docs/principles/hash_join" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"StarRocks 原理","item":"https://danjing-coder.github.io/docs/principles/"},{"@type":"ListItem","position":2,"name":"Hash Join 原理","item":"https://danjing-coder.github.io/docs/principles/hash_join"}]}</script><link rel="stylesheet" href="/assets/css/styles.c70b19cb.css">
+<script src="/assets/js/runtime~main.2d2cb184.js" defer="defer"></script>
+<script src="/assets/js/main.def23d9e.js" defer="defer"></script>
+</head>
+<body class="navigation-with-keyboard">
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;"><defs>
+<symbol id="theme-svg-external-link" viewBox="0 0 24 24"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"/></symbol>
+</defs></svg>
+<script>!function(){var t="light";var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();document.documentElement.setAttribute("data-theme",e||t),document.documentElement.setAttribute("data-theme-choice",e||t)}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="跳到主要内容"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">跳到主要内容</a></div><nav aria-label="主导航" class="theme-layout-navbar navbar navbar--fixed-top"><div class="navbar__inner"><div class="theme-layout-navbar-left navbar__items"><button aria-label="切换导航栏" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/"><b class="navbar__title text--truncate">StarRocks 文档</b></a><a class="navbar__item navbar__link" href="/docs/intro">文档</a></div><div class="theme-layout-navbar-right navbar__items navbar__items--right"><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/docs/intro">intro</a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="system mode" aria-label="切换浅色/暗黑模式（当前为system mode）"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP systemToggleIcon_QzmC"><path fill="currentColor" d="m12 21c4.971 0 9-4.029 9-9s-4.029-9-9-9-9 4.029-9 9 4.029 9 9 9zm4.95-13.95c1.313 1.313 2.05 3.093 2.05 4.95s-0.738 3.637-2.05 4.95c-1.313 1.313-3.093 2.05-4.95 2.05v-14c1.857 0 3.637 0.737 4.95 2.05z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="theme-layout-main main-wrapper mainWrapper_z2l0"><div class="docsWrapper_hBAB"><button aria-label="回到顶部" class="clean-btn theme-back-to-top-button backToTopButton_sjWU" type="button"></button><div class="docRoot_UBD9"><aside class="theme-doc-sidebar-container docSidebarContainer_YfHR"><div class="sidebarViewport_aRkj"><div class="sidebar_njMd"><nav aria-label="文档侧边栏" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/intro">StarRocks 最佳实践指南</a></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="true" href="/docs/using_starrocks/cluster-planning">最佳实践</a></div><ul class="menu__list"><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" tabindex="0" href="/docs/using_starrocks/cluster-planning">规划与部署</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" tabindex="0" href="/docs/using_starrocks">使用与开发</a><button aria-label="展开侧边栏分类 &#x27;使用与开发&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" tabindex="0" href="/docs/Monitor">运维与监控</a><button aria-label="展开侧边栏分类 &#x27;运维与监控&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" tabindex="0" href="/docs/troubleshooting">故障处理</a><button aria-label="展开侧边栏分类 &#x27;故障处理&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" tabindex="0" href="/docs/governance">集群治理</a><button aria-label="展开侧边栏分类 &#x27;集群治理&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" tabindex="0" href="/docs/maintenance">集群管理</a><button aria-label="展开侧边栏分类 &#x27;集群管理&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li></ul></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--active" href="/docs/principles">StarRocks 原理</a><button aria-label="折叠侧边栏分类 &#x27;StarRocks 原理&#x27;" aria-expanded="true" type="button" class="clean-btn menu__caret"></button></div><ul class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/principles/query_processing">查询处理流程</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/principles/data_ingestion">数据导入原理</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/principles/compaction">Compaction 原理</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/principles/optimizer">优化器原理</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/docs/principles/hash_join">Hash Join 原理</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/principles/join_reorder">Join Reorder 原理</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/principles/runtime_filter">Runtime Filter 原理</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/principles/aggregate_operator">聚合算子原理</a></li></ul></li></ul></nav></div></div></aside><main class="docMainContainer_TBSr"><div class="container padding-top--md padding-bottom--lg"><div class="row"><div class="col docItemCol_VOVn"><div class="docItemContainer_Djhp"><article><nav class="theme-doc-breadcrumbs breadcrumbsContainer_Z_bl" aria-label="页面路径"><ul class="breadcrumbs"><li class="breadcrumbs__item"><a class="breadcrumbs__link" href="/docs/principles"><span>StarRocks 原理</span></a></li><li class="breadcrumbs__item breadcrumbs__item--active"><span class="breadcrumbs__link">Hash Join 原理</span></li></ul></nav><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_ITEo"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">本页总览</button></div><div class="theme-doc-markdown markdown"><header><h1>Hash Join 原理</h1></header>
+<p>Hash Join 是 StarRocks 中最常用、最高效的 Join 实现方式。它通过构建哈希表，将等值 Join 操作转化为高效的哈希查找，极大地提升了查询性能。理解其内部原理，有助于我们编写更高效的 Join SQL，并诊断相关的性能问题。</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="1-hash-join-的基本流程">1. Hash Join 的基本流程<a href="#1-hash-join-的基本流程" class="hash-link" aria-label="1. Hash Join 的基本流程的直接链接" title="1. Hash Join 的基本流程的直接链接">​</a></h2>
+<p>一个典型的 Hash Join 过程分为两个阶段：<strong>Build (构建) 阶段</strong> 和 <strong>Probe (探查) 阶段</strong>。</p>
+<ul>
+<li>
+<p><strong>Build Phase:</strong></p>
+<ol>
+<li>优化器会选择一个表作为 <strong>Build Table</strong> (构建表)，通常是两个表中较小的一个（经过过滤后）。</li>
+<li>BE 节点会扫描 Build Table 的数据，并根据 Join Key 计算哈希值。</li>
+<li>将 Join Key 和对应的行数据存入一个内存中的哈希表（<code>HashTable</code>）中。</li>
+</ol>
+</li>
+<li>
+<p><strong>Probe Phase:</strong></p>
+<ol>
+<li>另一个表则作为 <strong>Probe Table</strong> (探查表)。</li>
+<li>BE 节点会流式地扫描 Probe Table 的数据，并同样根据 Join Key 计算哈希值。</li>
+<li>用计算出的哈希值去哈希表中查找。如果找到了匹配的 Key，则将 Probe Table 的行与哈希表中存储的 Build Table 的行拼接起来，形成 Join 结果。</li>
+</ol>
+</li>
+</ul>
+<div></div>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="2-分布式-hash-join">2. 分布式 Hash Join<a href="#2-分布式-hash-join" class="hash-link" aria-label="2. 分布式 Hash Join的直接链接" title="2. 分布式 Hash Join的直接链接">​</a></h2>
+<p>在分布式环境中，数据分布在多个 BE 节点上。StarRocks 会根据表的统计信息和成本估算，选择不同的数据分发策略来执行 Hash Join。</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="21-broadcast-join-广播-join">2.1 Broadcast Join (广播 Join)<a href="#21-broadcast-join-广播-join" class="hash-link" aria-label="2.1 Broadcast Join (广播 Join)的直接链接" title="2.1 Broadcast Join (广播 Join)的直接链接">​</a></h3>
+<ul>
+<li><strong>适用场景:</strong> 当 Build Table 非常小（例如，小于几十 MB）时。</li>
+<li><strong>工作原理:</strong>
+<ol>
+<li>将完整的 Build Table（小表）广播到所有参与 Probe Table（大表）扫描的 BE 节点上。</li>
+<li>每个 BE 节点都在本地独立地构建哈希表，并用本地的大表数据进行 Probe。</li>
+</ol>
+</li>
+<li><strong>优点:</strong> 避免了对大表进行网络 shuffle，网络开销小。</li>
+<li><strong>缺点:</strong> 如果小表不够小，广播的成本会很高，并  且会在每个 BE 节点上都占用一份内存来构建哈希表。</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="22-shuffle-join-重分布-join">2.2 Shuffle Join (重分布 Join)<a href="#22-shuffle-join-重分布-join" class="hash-link" aria-label="2.2 Shuffle Join (重分布 Join)的直接链接" title="2.2 Shuffle Join (重分布 Join)的直接链接">​</a></h3>
+<ul>
+<li><strong>适用场景:</strong> 当两个表都比较大，不适合广播时。这是最常见的分布式 Join 方式。</li>
+<li><strong>工作原理:</strong>
+<ol>
+<li>根据 Join Key 对 Build Table 和 Probe Table 的数据进行哈希重分布（Shuffle）。</li>
+<li>确保拥有相同 Join Key 的数据会被发送到同一个 BE 节点上。</li>
+<li>每个 BE 节点接收到属于自己的数据后，在本地执行标准的 Hash Join 流程。</li>
+</ol>
+</li>
+<li><strong>优点:</strong> 可以处理任意大小的表的 Join，并且 Join 的计算压力被均匀地分散到所有 BE 节点上。</li>
+<li><strong>缺点:</strong> 需要对两个表都进行网络 shuffle，网络开销较大。</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="23-colocate-join">2.3 Colocate Join<a href="#23-colocate-join" class="hash-link" aria-label="2.3 Colocate Join的直接链接" title="2.3 Colocate Join的直接链接">​</a></h3>
+<ul>
+<li><strong>适用场景:</strong> 如果两个表在建表时使用了相同的分桶键，并且分桶数相同，就可以触发 Colocate Join。</li>
+<li><strong>工作原理:</strong> 由于数据在导入时就已经按照 Join Key 预先分布好了，执行 Join 时<strong>完全不需要进行网络 shuffle</strong>。每个 BE 节点直接在本地执行 Join 操作即可。</li>
+<li><strong>优点:</strong> 性能最高的 Join 方式，因为它消除了网络传输的瓶颈。</li>
+<li><strong>缺点:</strong> 对数据建模有要求，需要提前规划。</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="24-bucket-shuffle-join">2.4 Bucket Shuffle Join<a href="#24-bucket-shuffle-join" class="hash-link" aria-label="2.4 Bucket Shuffle Join的直接链接" title="2.4 Bucket Shuffle Join的直接链接">​</a></h3>
+<ul>
+<li><strong>适用场景:</strong> 当 Probe Table (大表) 已经按照 Join Key 分桶，但 Build Table (小表) 没有采用相同的分桶策略（例如，小表是随机分桶，或者分桶键不同）时。</li>
+<li><strong>工作原理:</strong> 这是对标准 Shuffle Join 的一种优化。优化器识别到大表的数据已经按 Join Key 分布在各个 BE 节点上，因此<strong>只需要将小表的数据进行 shuffle</strong>，发送到大表对应分桶所在的 BE 节点。大表本身则完全避免了网络传输。</li>
+<li><strong>优点:</strong> 相比于需要 shuffle 两张表的标准 Shuffle Join，极大地减少了网络开销，性能提升显著。</li>
+<li><strong>缺点:</strong> 仍然需要 shuffle 小表，性能不如 Colocate Join。</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="3-哈希表的实现与优化">3. 哈希表的实现与优化<a href="#3-哈希表的实现与优化" class="hash-link" aria-label="3. 哈希表的实现与优化的直接链接" title="3. 哈希表的实现与优化的直接链接">​</a></h2>
+<p>StarRocks 的哈希表实现经过了大量优化，以应对大数据量和高并发。</p>
+<ul>
+<li>
+<p><strong>分区哈希表 (Partitioned Hash Table):</strong> 为了降低锁竞争和提升并发能力，StarRocks 会将一个大的哈希表在逻辑上切分成多个小的分区（Partition），每个分区由一个独立的锁来保护。Probe 线程可以并行地访问不同的分区。</p>
+</li>
+<li>
+<p><strong>溢写 (Spill to Disk):</strong> 当内存不足以容纳整个哈希表时，StarRocks 支持将部分哈希表数据溢写到磁盘上。</p>
+<ul>
+<li><strong>工作原理:</strong> 在 Build 阶段，如果发现内存不足，会将部分数据分区写入临时文件。在 Probe 阶段，会先处理内存中的分区，然后再分批加载 磁盘上的分区进行处理。</li>
+<li><strong>影响:</strong> 溢写可以保证大查询的成功执行，但会引入磁盘 I/O，显著降低 Join 性能。</li>
+</ul>
+</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="4-最佳实践与诊断">4. 最佳实践与诊断<a href="#4-最佳实践与诊断" class="hash-link" aria-label="4. 最佳实践与诊断的直接链接" title="4. 最佳实践与诊断的直接链接">​</a></h2>
+<ul>
+<li>
+<p><strong>使用 <code>EXPLAIN</code> 查看 Join 策略:</strong>
+<code>EXPLAIN</code> 的输出会明确显示 Join 的类型 (<code>BROADCAST</code> 或 <code>SHUFFLE</code>)。</p>
+<div class="language-text codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#bfc7d5;--prism-background-color:#292d3e"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-text codeBlock_bY9V thin-scrollbar" style="color:#bfc7d5;background-color:#292d3e"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#bfc7d5"><span class="token plain">HASH JOIN(SHUFFLE)</span><br></span></code></pre></div></div>
+<p>通过这个信息，可以判断优化器的选择是否符合预期。</p>
+</li>
+<li>
+<p><strong>监控内存与溢写:</strong></p>
+<ul>
+<li>在 Query Profile 中，可以查看 <code>HashJoinBuild</code> 和 <code>HashJoinProbe</code> 算子的详细信息。</li>
+<li>关注 <code>MemoryUsage</code> 指标，如果它接近 <code>exec_mem_limit</code>，说明内存压力较大。</li>
+<li>如果 <code>Spill</code> 相关的指标大于 0，说明发生了溢写，这是需要重点优化的信号。</li>
+</ul>
+</li>
+<li>
+<p><strong>优化建议:</strong></p>
+<ul>
+<li><strong>收集准确的统计信息:</strong> CBO 依赖统计信息来决定使用 Broadcast 还是 Shuffle Join。过时的统计信息可能导致优化器选择次优的计划。</li>
+<li><strong>利用 Colocate Join:</strong> 对于频繁 Join 的大表，应在数据建模阶段就规划好 Colocate Group。</li>
+<li><strong>增加过滤条  件:</strong> 在 <code>WHERE</code> 子句中增加对 Build Table 的过滤条件，可以有效减小哈希表的大小，甚至可能将一个 Shuffle Join 优化为 Broadcast Join。</li>
+<li><strong>调整 Session 变量:</strong> 对于内存不足导致溢写的大查询，可以临时调高 <code>exec_mem_limit</code>。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<p>参考资料: StarRocks 技术内幕：<a href="https://zhuanlan.zhihu.com/p/593611907" target="_blank" rel="noopener noreferrer">Hash Join 实现</a></p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="5-其他-join-类型">5. 其他 Join 类型<a href="#5-其他-join-类型" class="hash-link" aria-label="5. 其他 Join 类型的直接链接" title="5. 其他 Join 类型的直接链接">​</a></h2>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="51-nested-loop-join-嵌套循环-join">5.1 Nested Loop Join (嵌套循环 Join)<a href="#51-nested-loop-join-嵌套循环-join" class="hash-link" aria-label="5.1 Nested Loop Join (嵌套循环 Join)的直接链接" title="5.1 Nested Loop Join (嵌套循环 Join)的直接链接">​</a></h3>
+<ul>
+<li><strong>描述:</strong> 这是一种“最后的手段”，当其他高效的 Join 算法（如 Hash Join）因 Join 条件的限制而无法使用时，优化器才会选择它。</li>
+<li><strong>适用场景:</strong>
+<ul>
+<li><strong>非等值连接 (Non-Equi Join):</strong> 例如 <code>t1.id &gt; t2.id</code> 或 <code>t1.col BETWEEN t2.start AND t2.end</code>。</li>
+<li><strong>某些复杂的 <code>OR</code> 条件。</strong></li>
+</ul>
+</li>
+<li><strong>工作原理:</strong> 其基本思想是嵌套循环，对于外层表的每一行，遍历内层表的所有行来检查 Join 条件是否满足。虽然 StarRocks 内部有优化（如块嵌套循环 Block-Nested Loop Join），但其计算复杂度（O(M*N)）仍然非常高。</li>
+<li><strong>性能影响:</strong> 性能极差，尤其是在处理大表时。应极力避免触发 Nested Loop Join。</li>
+<li><strong>诊断:</strong>
+<ul>
+<li> 在 <code>EXPLAIN</code> 的输出中，会明确显示 <code>NESTLOOP JOIN</code>。</li>
+<li>如果发现它，通常意味着需要重写 SQL 或优化数据模型。例如，有时可以将非等值 Join 转换为等值 Join 和范围过滤的组合，以利用更高效的 Hash Join。</li>
+</ul>
+</li>
+</ul></div></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="文件选项卡"><a class="pagination-nav__link pagination-nav__link--prev" href="/docs/principles/optimizer"><div class="pagination-nav__sublabel">上一页</div><div class="pagination-nav__label">优化器原理</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/docs/principles/join_reorder"><div class="pagination-nav__sublabel">下一页</div><div class="pagination-nav__label">Join Reorder 原理</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#1-hash-join-的基本流程" class="table-of-contents__link toc-highlight">1. Hash Join 的基本流程</a></li><li><a href="#2-分布式-hash-join" class="table-of-contents__link toc-highlight">2. 分布式 Hash Join</a><ul><li><a href="#21-broadcast-join-广播-join" class="table-of-contents__link toc-highlight">2.1 Broadcast Join (广播 Join)</a></li><li><a href="#22-shuffle-join-重分布-join" class="table-of-contents__link toc-highlight">2.2 Shuffle Join (重分布 Join)</a></li><li><a href="#23-colocate-join" class="table-of-contents__link toc-highlight">2.3 Colocate Join</a></li><li><a href="#24-bucket-shuffle-join" class="table-of-contents__link toc-highlight">2.4 Bucket Shuffle Join</a></li></ul></li><li><a href="#3-哈希表的实现与优化" class="table-of-contents__link toc-highlight">3. 哈希表的实现与优化</a></li><li><a href="#4-最佳实践与诊断" class="table-of-contents__link toc-highlight">4. 最佳实践与诊断</a></li><li><a href="#5-其他-join-类型" class="table-of-contents__link toc-highlight">5. 其他 Join 类型</a><ul><li><a href="#51-nested-loop-join-嵌套循环-join" class="table-of-contents__link toc-highlight">5.1 Nested Loop Join (嵌套循环 Join)</a></li></ul></li></ul></div></div></div></div></main></div></div></div></div>
+</body>
+</html>

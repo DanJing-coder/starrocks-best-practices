@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="zh-Hans" dir="ltr" class="docs-wrapper plugin-docs plugin-id-default docs-version-current docs-doc-page docs-doc-id-maintenance/upgrade" data-has-hydrated="false">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v3.8.1">
+<title data-rh="true">集群升降级 (SOP) | StarRocks 最佳实践手册</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://danjing-coder.github.io/docs/maintenance/upgrade"><meta data-rh="true" property="og:locale" content="zh_Hans"><meta data-rh="true" name="docusaurus_locale" content="zh-Hans"><meta data-rh="true" name="docsearch:language" content="zh-Hans"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="集群升降级 (SOP) | StarRocks 最佳实践手册"><meta data-rh="true" name="description" content="对 StarRocks 集群进行版本升级是获取新功能、性能优化和 Bug 修复的重要途径。本章将提供标准的集群升降级操作流程（SOP），帮助您安全、平滑地完成版本变更。"><meta data-rh="true" property="og:description" content="对 StarRocks 集群进行版本升级是获取新功能、性能优化和 Bug 修复的重要途径。本章将提供标准的集群升降级操作流程（SOP），帮助您安全、平滑地完成版本变更。"><link data-rh="true" rel="canonical" href="https://danjing-coder.github.io/docs/maintenance/upgrade"><link data-rh="true" rel="alternate" href="https://danjing-coder.github.io/docs/maintenance/upgrade" hreflang="zh-Hans"><link data-rh="true" rel="alternate" href="https://danjing-coder.github.io/docs/maintenance/upgrade" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"集群管理","item":"https://danjing-coder.github.io/docs/maintenance/"},{"@type":"ListItem","position":2,"name":"集群升降级 (SOP)","item":"https://danjing-coder.github.io/docs/maintenance/upgrade"}]}</script><link rel="stylesheet" href="/assets/css/styles.c70b19cb.css">
+<script src="/assets/js/runtime~main.2d2cb184.js" defer="defer"></script>
+<script src="/assets/js/main.def23d9e.js" defer="defer"></script>
+</head>
+<body class="navigation-with-keyboard">
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;"><defs>
+<symbol id="theme-svg-external-link" viewBox="0 0 24 24"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"/></symbol>
+</defs></svg>
+<script>!function(){var t="light";var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();document.documentElement.setAttribute("data-theme",e||t),document.documentElement.setAttribute("data-theme-choice",e||t)}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="跳到主要内容"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">跳到主要内容</a></div><nav aria-label="主导航" class="theme-layout-navbar navbar navbar--fixed-top"><div class="navbar__inner"><div class="theme-layout-navbar-left navbar__items"><button aria-label="切换导航栏" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/"><b class="navbar__title text--truncate">StarRocks 文档</b></a><a class="navbar__item navbar__link" href="/docs/intro">文档</a></div><div class="theme-layout-navbar-right navbar__items navbar__items--right"><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/docs/intro">intro</a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="system mode" aria-label="切换浅色/暗黑模式（当前为system mode）"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP systemToggleIcon_QzmC"><path fill="currentColor" d="m12 21c4.971 0 9-4.029 9-9s-4.029-9-9-9-9 4.029-9 9 4.029 9 9 9zm4.95-13.95c1.313 1.313 2.05 3.093 2.05 4.95s-0.738 3.637-2.05 4.95c-1.313 1.313-3.093 2.05-4.95 2.05v-14c1.857 0 3.637 0.737 4.95 2.05z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="theme-layout-main main-wrapper mainWrapper_z2l0"><div class="docsWrapper_hBAB"><button aria-label="回到顶部" class="clean-btn theme-back-to-top-button backToTopButton_sjWU" type="button"></button><div class="docRoot_UBD9"><aside class="theme-doc-sidebar-container docSidebarContainer_YfHR"><div class="sidebarViewport_aRkj"><div class="sidebar_njMd"><nav aria-label="文档侧边栏" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/intro">StarRocks 最佳实践指南</a></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret menu__link--active" role="button" aria-expanded="true" href="/docs/using_starrocks/cluster-planning">最佳实践</a></div><ul class="menu__list"><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" tabindex="0" href="/docs/using_starrocks/cluster-planning">规划与部署</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" tabindex="0" href="/docs/using_starrocks">使用与开发</a><button aria-label="展开侧边栏分类 &#x27;使用与开发&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" tabindex="0" href="/docs/Monitor">运维与监控</a><button aria-label="展开侧边栏分类 &#x27;运维与监控&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" tabindex="0" href="/docs/troubleshooting">故障处理</a><button aria-label="展开侧边栏分类 &#x27;故障处理&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" tabindex="0" href="/docs/governance">集群治理</a><button aria-label="展开侧边栏分类 &#x27;集群治理&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--active" tabindex="0" href="/docs/maintenance">集群管理</a><button aria-label="折叠侧边栏分类 &#x27;集群管理&#x27;" aria-expanded="true" type="button" class="clean-btn menu__caret"></button></div><ul class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-3 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/maintenance/disk_sop">磁盘管理 (SOP)</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-3 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/maintenance/scaling_sop">集群扩缩容 (SOP)</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-3 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/docs/maintenance/upgrade">集群升降级 (SOP)</a></li></ul></li></ul></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" href="/docs/principles">StarRocks 原理</a><button aria-label="展开侧边栏分类 &#x27;StarRocks 原理&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li></ul></nav></div></div></aside><main class="docMainContainer_TBSr"><div class="container padding-top--md padding-bottom--lg"><div class="row"><div class="col docItemCol_VOVn"><div class="docItemContainer_Djhp"><article><nav class="theme-doc-breadcrumbs breadcrumbsContainer_Z_bl" aria-label="页面路径"><ul class="breadcrumbs"><li class="breadcrumbs__item"><span class="breadcrumbs__link">最佳实践</span></li><li class="breadcrumbs__item"><a class="breadcrumbs__link" href="/docs/maintenance"><span>集群管理</span></a></li><li class="breadcrumbs__item breadcrumbs__item--active"><span class="breadcrumbs__link">集群升降级 (SOP)</span></li></ul></nav><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_ITEo"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">本页总览</button></div><div class="theme-doc-markdown markdown"><header><h1>集群升降级 (SOP)</h1></header>
+<p>对 StarRocks 集群进行版本升级是获取新功能、性能优化和 Bug 修复的重要途径。本章将提供标准的集群升降级操作流程（SOP），帮助您安全、平滑地完成版本变更。</p>
+<blockquote>
+<p><strong>注意：</strong>
+本章内容为标准的升降级操作流程总结。关于特定版本的详细升级步骤、兼容性说明和注意事项，请务必参考 StarRocks 官方文档：</p>
+<ul>
+<li><strong>升级文档:</strong> <a href="https://docs.starrocks.io/zh/docs/deployment/upgrade/" target="_blank" rel="noopener noreferrer">https://docs.starrocks.io/zh/docs/deployment/upgrade/</a></li>
+<li><strong>降级文档:</strong> <a href="https://docs.starrocks.io/zh/docs/deployment/downgrade/" target="_blank" rel="noopener noreferrer">https://docs.starrocks.io/zh/docs/deployment/downgrade/</a></li>
+</ul>
+</blockquote>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="1-升降级前置检查与最佳实践">1. 升降级前置检查与最佳实践<a href="#1-升降级前置检查与最佳实践" class="hash-link" aria-label="1. 升降级前置检查与最佳实践的直接链接" title="1. 升降级前置检查与最佳实践的直接链接">​</a></h2>
+<p>在执行任何升降级操作之前，请务必遵循以下检查清单和实践建议：</p>
+<ul class="contains-task-list containsTaskList_mC6p">
+<li class="task-list-item"><input type="checkbox" disabled=""> <strong>详细阅读版本说明 (Release Notes):</strong> 在升级前，务必仔细阅读目标版本的 Release Notes 和 官方提供的变更注意事项，重点关注 <strong>&quot;不兼容变更&quot;</strong>、<strong>&quot;重要特性&quot;</strong> 和 <strong>&quot;废弃功能&quot;</strong> 部分。</li>
+<li class="task-list-item"><input type="checkbox" disabled=""> <strong>备份元数据:</strong> 在任何升级操作开始前，务必对 FE Master 节点的元数据目录 (<code>meta_dir</code>) 进行物理备份。这是在发生灾难性问题时最后的恢复手段。</li>
+<li class="task-list-item"><input type="checkbox" disabled=""> <strong>在预发/测试环境充分验证:</strong> <strong>严禁</strong>在未经验证的情况下直接升级生产环境。请务必在与生产环境配置相似的预发或测试环境中完整地执行一遍升级流程，并验证核心业务的查询和导入功能是否正常。</li>
+<li class="task-list-item"><input type="checkbox" disabled=""> <strong>选择业务低峰期操作:</strong> 升降级会涉及节点重启，虽然滚动升级对业务影响较小，但仍建议在业务负载最低的时间段进行，以减小潜在风险。</li>
+<li class="task-list-item"><input type="checkbox" disabled=""> <strong>检查集群健康状态:</strong> 升级前，确保集群处于健康状态。<!-- -->
+<div class="language-sql codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#bfc7d5;--prism-background-color:#292d3e"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-sql codeBlock_bY9V thin-scrollbar" style="color:#bfc7d5;background-color:#292d3e"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#bfc7d5"><span class="token comment" style="color:rgb(105, 112, 152);font-style:italic">-- 检查 BE/FE 节点状态，确保所有节点 Alive</span><span class="token plain"></span><br></span><span class="token-line" style="color:#bfc7d5"><span class="token plain"></span><span class="token keyword" style="font-style:italic">SHOW</span><span class="token plain"> BACKENDS</span><span class="token punctuation" style="color:rgb(199, 146, 234)">;</span><span class="token plain"></span><br></span><span class="token-line" style="color:#bfc7d5"><span class="token plain"></span><span class="token keyword" style="font-style:italic">SHOW</span><span class="token plain"> FRONTENDS</span><span class="token punctuation" style="color:rgb(199, 146, 234)">;</span><span class="token plain"></span><br></span><span class="token-line" style="color:#bfc7d5"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#bfc7d5"><span class="token plain"></span><span class="token comment" style="color:rgb(105, 112, 152);font-style:italic">-- 检查 Tablet 健康状态，确保没有 unhealthy 的副本</span><span class="token plain"></span><br></span><span class="token-line" style="color:#bfc7d5"><span class="token plain"></span><span class="token keyword" style="font-style:italic">SHOW</span><span class="token plain"> </span><span class="token keyword" style="font-style:italic">PROC</span><span class="token plain"> </span><span class="token string" style="color:rgb(195, 232, 141)">&#x27;/statistic&#x27;</span><span class="token punctuation" style="color:rgb(199, 146, 234)">;</span><br></span></code></pre></div></div>
+<!-- -->如果存在不健康的节点或副本，请先处理完毕再进行升级。</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="2-滚动升级-推荐">2. 滚动升级 (推荐)<a href="#2-滚动升级-推荐" class="hash-link" aria-label="2. 滚动升级 (推荐)的直接链接" title="2. 滚动升级 (推荐)的直接链接">​</a></h2>
+<p>滚动升级是推荐的升级方式，它通过逐个重启节点来完成升级，可以保证集群在整个升级过程中服务不中断，对业务基本无感。</p>
+<p><strong>升级顺序：BE -&gt; FE</strong></p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="21-升级所有-be-节点">2.1 升级所有 BE 节点<a href="#21-升级所有-be-节点" class="hash-link" aria-label="2.1 升级所有 BE 节点的直接链接" title="2.1 升级所有 BE 节点的直接链接">​</a></h3>
+<ol>
+<li>
+<p><strong>下载并解压新  版本:</strong> 在任一节点下载并解压新版本的 StarRocks 安装包。</p>
+</li>
+<li>
+<p><strong>逐个升级 BE:</strong> 对集群中的<strong>每一个</strong> BE 节点，执行以下操作：
+a.  将新版本安装包中的 <code>be/lib/</code> 目录完整地拷贝并覆盖当前节点的 <code>be/lib/</code> 目录。</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#bfc7d5;--prism-background-color:#292d3e"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#bfc7d5;background-color:#292d3e"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#bfc7d5"><span class="token plain"># 假设新版本目录为 new_starrocks_version/</span><br></span><span class="token-line" style="color:#bfc7d5"><span class="token plain"># 假设当前 BE 部署目录为 /path/to/starrocks/be/</span><br></span><span class="token-line" style="color:#bfc7d5"><span class="token plain">cp -rf /path/to/new_starrocks_version/be/lib/* /path/to/starrocks/be/lib/</span><br></span></code></pre></div></div>
+<p>b.  停止当前 BE 进程。</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#bfc7d5;--prism-background-color:#292d3e"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#bfc7d5;background-color:#292d3e"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#bfc7d5"><span class="token plain">cd /path/to/starrocks/be/</span><br></span><span class="token-line" style="color:#bfc7d5"><span class="token plain">./bin/stop_be.sh</span><br></span></code></pre></div></div>
+<p>c.  启动当前 BE 进程。</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#bfc7d5;--prism-background-color:#292d3e"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#bfc7d5;background-color:#292d3e"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#bfc7d5"><span class="token plain">./bin/start_be.sh --daemon</span><br></span></code></pre></div></div>
+<p>d.  <strong>验证节点:</strong> 连接到 FE，执行 <code>SHOW BACKENDS;</code>，等待该节点的 <code>Alive</code> 状态变为 <code>true</code>，并确认其 <code>Version</code> 字段已更新为目标版本。</p>
+</li>
+<li>
+<p><strong>确保所有 BE 升级完成:</strong> 重复以上步骤，直到所有 BE 节点都已成功升级并恢复在线状态。</p>
+</li>
+</ol>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="22-升级所有-fe-节点">2.2 升级所有 FE 节点<a href="#22-升级所有-fe-节点" class="hash-link" aria-label="2.2 升级所有 FE 节点的直接链接" title="2.2 升级所有 FE 节点的直接链接">​</a></h3>
+<p>FE 节点的升级顺序至关重要，必须遵循 <strong>Observer -&gt; Follower -&gt; Master</strong> 的顺序。</p>
+<ol>
+<li><strong>识别 FE 角色:</strong> 执行 <code>SHOW FRONTENDS;</code>，根据 <code>Role</code> 字段识别出所有 FE 节点的角色（Master, Follower, Observer）。</li>
+<li><strong>升级所有 Observer 节点:</strong> 对<strong>每一个</strong> Observer 节点，执行以下操作：
+a.  将新版本安装包中的 <code>fe/lib/</code> 目录完整地拷贝并覆盖当前节点的 <code>fe/lib/</code> 目录。
+b.  停止 FE 进程。
+c.  启动 FE 进程。
+d.  验证节点：执行 <code>SHOW FRONTENDS;</code>，确认该节点的 <code>Alive</code> 状态为 <code>true</code>，<code>Version</code> 已更新。</li>
+<li><strong>升级所有 Follower 节点:</strong> 对<strong>每一个</strong> Follower 节点，重复上述 Observer 的升级步骤。</li>
+<li><strong>升级 Master 节点:</strong>
+a.  对当前的 Master 节点执行升级操作（替换 <code>lib</code> 目录，停止进程）。
+b.  停止 Master 节点后，集群会自动进行选举，某个 Follower  节点会成为新的 Master。这个过程通常在 10 秒内完成。
+c.  启动原来的 Master 节点，它将作为 Follower 角色加入集群。
+d.  <strong>最终验证:</strong> 再次执行 <code>SHOW FRONTENDS;</code>，确认所有 FE 节点的 <code>Alive</code> 状态均为 <code>true</code>，并且 <code>Version</code> 都已更新为目标版本。</li>
+</ol>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="3-停机升级">3. 停机升级<a href="#3-停机升级" class="hash-link" aria-label="3. 停机升级的直接链接" title="3. 停机升级的直接链接">​</a></h2>
+<p>当遇到无法进行滚动升级的重大版本变更（通常在 Release Notes 中会明确指出），或者希望在最短时间内完成升级时，可以选择停机升级。</p>
+<ol>
+<li><strong>通知业务方:</strong> 停机升级会导致集群在一段时间内完全不可用，务必提前与业务方沟通并获得许可。</li>
+<li><strong>备份元数据:</strong> 再次强调，在停机前务必备份 Master FE 的元数据。</li>
+<li><strong>停止整个集群:</strong>
+a.  停止所有 BE 节点的进程。
+b.  停止所有 FE 节点的进程。</li>
+<li><strong>替换所有节点文件:</strong>
+a.  在所有 BE 节点上，用新版本的 <code>be/lib/</code> 覆盖旧目录。
+b.  在所有 FE 节点上，用新版本的 <code>fe/lib/</code> 覆盖旧目录。</li>
+<li><strong>启动整个集群:</strong>
+a.  启动所有 FE 节点的进程。
+b.  启动所有 BE 节点的进程。</li>
+<li><strong>验证集群:</strong>
+a.  执行 <code>SHOW FRONTENDS;</code> 和 <code>SHOW BACKENDS;</code>，确认所有节点都已正常启动并加入集群。
+b.  检查集群健康状态。</li>
+</ol>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="4-降级与回滚">4. 降级与回滚<a href="#4-降级与回滚" class="hash-link" aria-label="4. 降级与回滚的直接链接" title="4. 降级与回滚的直接链接">​</a></h2>
+<blockquote>
+<p><strong>严重警告：</strong> 降级是<strong>极高风 险</strong>的操作，StarRocks <strong>不承诺</strong>跨版本的降级兼容性，尤其是涉及到元数据格式变更的版本。降级可能导致元数据损坏、数据丢失甚至集群无法启动。<strong>除非万不得已，否则不要尝试降级。</strong></p>
+</blockquote>
+<p>如果升级后遇到严重问题，且无法通过其他方式解决，可以考虑回滚到升级前的版本。</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="41-滚动回滚">4.1 滚动回滚<a href="#41-滚动回滚" class="hash-link" aria-label="4.1 滚动回滚的直接链接" title="4.1 滚动回滚的直接链接">​</a></h3>
+<p>如果升级过程是滚动的，可以尝试以相反的顺序进行滚动回滚。</p>
+<p><strong>回滚顺序：FE -&gt; BE</strong></p>
+<ol>
+<li><strong>回滚 FE 节点:</strong> 按照 <strong>Master -&gt; Follower -&gt; Observer</strong> 的顺序，逐个停止 FE 节点，用旧版本的 <code>fe/lib/</code> 目录覆盖，然后重启。</li>
+<li><strong>回滚 BE 节点:</strong> 逐个停止 BE 节点，用旧版本的 <code>be/lib/</code> 目录覆盖，然后重启。</li>
+</ol>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="42-使用元数据备份恢复">4.2 使用元数据备份恢复<a href="#42-使用元数据备份恢复" class="hash-link" aria-label="4.2 使用元数据备份恢复的直接链接" title="4.2 使用元数据备份恢复的直接链接">​</a></h3>
+<p>如果滚动回滚失败，或集群无法正常工作，最后的手段是使用元数据备份进行恢复。</p>
+<ol>
+<li><strong>停止整个集群。</strong></li>
+<li>清空所有 FE 节点的元数据目录 (<code>meta_dir</code>)。</li>
+<li>将升级前备份的元数据拷贝到原 Master FE 节点的 <code>meta_dir</code> 目录下。</li>
+<li>在所有节点上，将 <code>lib</code> 目录恢复为旧版本。</li>
+<li><strong>（关键）</strong> 仅启动原 Master FE 节点。</li>
+<li>使用 <code>ALTER SYSTEM ADD FOLLOWER/OBSERVER</code> 命令，将其他 FE 节点  重新加入集群。</li>
+<li>启动所有 BE 节点。</li>
+</ol>
+<blockquote>
+<p><strong>数据丢失风险：</strong> 使用元数据备份恢复，将丢失从备份时间点到恢复时间点之间所有的数据变更（包括数据导入和 Schema Change）。</p>
+</blockquote>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="5-升级后检查">5. 升级后检查<a href="#5-升级后检查" class="hash-link" aria-label="5. 升级后检查的直接链接" title="5. 升级后检查的直接链接">​</a></h2>
+<ul>
+<li><strong>功能验证:</strong> 运行核心业务的代表性查询，验证其功能和性能是否符合预期。</li>
+<li><strong>监控观察:</strong> 密切关注 Grafana 监控大盘，检查集群的 CPU、内存、I/O、查询延迟（QPS/Latency）等指标是否正常。</li>
+<li><strong>日志检查:</strong> 检查 <code>fe.log</code> 和 <code>be.INFO</code> 日志，确认没有异常的错误或警告信息。</li>
+</ul></div></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="文件选项卡"><a class="pagination-nav__link pagination-nav__link--prev" href="/docs/maintenance/scaling_sop"><div class="pagination-nav__sublabel">上一页</div><div class="pagination-nav__label">集群扩缩容 (SOP)</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/docs/principles"><div class="pagination-nav__sublabel">下一页</div><div class="pagination-nav__label">StarRocks 原理</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#1-升降级前置检查与最佳实践" class="table-of-contents__link toc-highlight">1. 升降级前置检查与最佳实践</a></li><li><a href="#2-滚动升级-推荐" class="table-of-contents__link toc-highlight">2. 滚动升级 (推荐)</a><ul><li><a href="#21-升级所有-be-节点" class="table-of-contents__link toc-highlight">2.1 升级所有 BE 节点</a></li><li><a href="#22-升级所有-fe-节点" class="table-of-contents__link toc-highlight">2.2 升级所有 FE 节点</a></li></ul></li><li><a href="#3-停机升级" class="table-of-contents__link toc-highlight">3. 停机升级</a></li><li><a href="#4-降级与回滚" class="table-of-contents__link toc-highlight">4. 降级与回滚</a><ul><li><a href="#41-滚动回滚" class="table-of-contents__link toc-highlight">4.1 滚动回滚</a></li><li><a href="#42-使用元数据备份恢复" class="table-of-contents__link toc-highlight">4.2 使用元数据备份恢复</a></li></ul></li><li><a href="#5-升级后检查" class="table-of-contents__link toc-highlight">5. 升级后检查</a></li></ul></div></div></div></div></main></div></div></div></div>
+</body>
+</html>

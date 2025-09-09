@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-Hans" dir="ltr" class="docs-wrapper plugin-docs plugin-id-default docs-version-current docs-doc-page docs-doc-id-principles/query_processing" data-has-hydrated="false">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v3.8.1">
+<title data-rh="true">查询处理流程 | StarRocks 最佳实践手册</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://danjing-coder.github.io/docs/principles/query_processing"><meta data-rh="true" property="og:locale" content="zh_Hans"><meta data-rh="true" name="docusaurus_locale" content="zh-Hans"><meta data-rh="true" name="docsearch:language" content="zh-Hans"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="查询处理流程 | StarRocks 最佳实践手册"><meta data-rh="true" name="description" content="StarRocks 的查询处理流程经过精心设计，旨在实现极致的性能和高并发。整个流程可以分为两个主要阶段：FE 的查询规划 和 BE 的查询执行。"><meta data-rh="true" property="og:description" content="StarRocks 的查询处理流程经过精心设计，旨在实现极致的性能和高并发。整个流程可以分为两个主要阶段：FE 的查询规划 和 BE 的查询执行。"><link data-rh="true" rel="canonical" href="https://danjing-coder.github.io/docs/principles/query_processing"><link data-rh="true" rel="alternate" href="https://danjing-coder.github.io/docs/principles/query_processing" hreflang="zh-Hans"><link data-rh="true" rel="alternate" href="https://danjing-coder.github.io/docs/principles/query_processing" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"StarRocks 原理","item":"https://danjing-coder.github.io/docs/principles/"},{"@type":"ListItem","position":2,"name":"查询处理流程","item":"https://danjing-coder.github.io/docs/principles/query_processing"}]}</script><link rel="stylesheet" href="/assets/css/styles.c70b19cb.css">
+<script src="/assets/js/runtime~main.2d2cb184.js" defer="defer"></script>
+<script src="/assets/js/main.def23d9e.js" defer="defer"></script>
+</head>
+<body class="navigation-with-keyboard">
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;"><defs>
+<symbol id="theme-svg-external-link" viewBox="0 0 24 24"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"/></symbol>
+</defs></svg>
+<script>!function(){var t="light";var e=function(){try{return new URLSearchParams(window.location.search).get("docusaurus-theme")}catch(t){}}()||function(){try{return window.localStorage.getItem("theme")}catch(t){}}();document.documentElement.setAttribute("data-theme",e||t),document.documentElement.setAttribute("data-theme-choice",e||t)}(),function(){try{const c=new URLSearchParams(window.location.search).entries();for(var[t,e]of c)if(t.startsWith("docusaurus-data-")){var a=t.replace("docusaurus-data-","data-");document.documentElement.setAttribute(a,e)}}catch(t){}}()</script><div id="__docusaurus"><div role="region" aria-label="跳到主要内容"><a class="skipToContent_fXgn" href="#__docusaurus_skipToContent_fallback">跳到主要内容</a></div><nav aria-label="主导航" class="theme-layout-navbar navbar navbar--fixed-top"><div class="navbar__inner"><div class="theme-layout-navbar-left navbar__items"><button aria-label="切换导航栏" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/"><b class="navbar__title text--truncate">StarRocks 文档</b></a><a class="navbar__item navbar__link" href="/docs/intro">文档</a></div><div class="theme-layout-navbar-right navbar__items navbar__items--right"><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/docs/intro">intro</a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="system mode" aria-label="切换浅色/暗黑模式（当前为system mode）"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="toggleIcon_g3eP systemToggleIcon_QzmC"><path fill="currentColor" d="m12 21c4.971 0 9-4.029 9-9s-4.029-9-9-9-9 4.029-9 9 4.029 9 9 9zm4.95-13.95c1.313 1.313 2.05 3.093 2.05 4.95s-0.738 3.637-2.05 4.95c-1.313 1.313-3.093 2.05-4.95 2.05v-14c1.857 0 3.637 0.737 4.95 2.05z"></path></svg></button></div><div class="navbarSearchContainer_Bca1"></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="__docusaurus_skipToContent_fallback" class="theme-layout-main main-wrapper mainWrapper_z2l0"><div class="docsWrapper_hBAB"><button aria-label="回到顶部" class="clean-btn theme-back-to-top-button backToTopButton_sjWU" type="button"></button><div class="docRoot_UBD9"><aside class="theme-doc-sidebar-container docSidebarContainer_YfHR"><div class="sidebarViewport_aRkj"><div class="sidebar_njMd"><nav aria-label="文档侧边栏" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/docs/intro">StarRocks 最佳实践指南</a></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="true" href="/docs/using_starrocks/cluster-planning">最佳实践</a></div><ul class="menu__list"><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--sublist-caret" role="button" aria-expanded="false" tabindex="0" href="/docs/using_starrocks/cluster-planning">规划与部署</a></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" tabindex="0" href="/docs/using_starrocks">使用与开发</a><button aria-label="展开侧边栏分类 &#x27;使用与开发&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" tabindex="0" href="/docs/Monitor">运维与监控</a><button aria-label="展开侧边栏分类 &#x27;运维与监控&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" tabindex="0" href="/docs/troubleshooting">故障处理</a><button aria-label="展开侧边栏分类 &#x27;故障处理&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" tabindex="0" href="/docs/governance">集群治理</a><button aria-label="展开侧边栏分类 &#x27;集群治理&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-2 menu__list-item menu__list-item--collapsed"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist" tabindex="0" href="/docs/maintenance">集群管理</a><button aria-label="展开侧边栏分类 &#x27;集群管理&#x27;" aria-expanded="false" type="button" class="clean-btn menu__caret"></button></div></li></ul></li><li class="theme-doc-sidebar-item-category theme-doc-sidebar-item-category-level-1 menu__list-item"><div class="menu__list-item-collapsible"><a class="menu__link menu__link--sublist menu__link--active" href="/docs/principles">StarRocks 原理</a><button aria-label="折叠侧边栏分类 &#x27;StarRocks 原理&#x27;" aria-expanded="true" type="button" class="clean-btn menu__caret"></button></div><ul class="menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" tabindex="0" href="/docs/principles/query_processing">查询处理流程</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/principles/data_ingestion">数据导入原理</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/principles/compaction">Compaction 原理</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/principles/optimizer">优化器原理</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/principles/hash_join">Hash Join 原理</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/principles/join_reorder">Join Reorder 原理</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/principles/runtime_filter">Runtime Filter 原理</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-2 menu__list-item"><a class="menu__link" tabindex="0" href="/docs/principles/aggregate_operator">聚合算子原理</a></li></ul></li></ul></nav></div></div></aside><main class="docMainContainer_TBSr"><div class="container padding-top--md padding-bottom--lg"><div class="row"><div class="col docItemCol_VOVn"><div class="docItemContainer_Djhp"><article><nav class="theme-doc-breadcrumbs breadcrumbsContainer_Z_bl" aria-label="页面路径"><ul class="breadcrumbs"><li class="breadcrumbs__item"><a class="breadcrumbs__link" href="/docs/principles"><span>StarRocks 原理</span></a></li><li class="breadcrumbs__item breadcrumbs__item--active"><span class="breadcrumbs__link">查询处理流程</span></li></ul></nav><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_ITEo"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">本页总览</button></div><div class="theme-doc-markdown markdown"><header><h1>查询处理流程</h1></header>
+<p>StarRocks 的查询处理流程经过精心设计，旨在实现极致的性能和高并发。整个流程可以分为两个主要阶段：<strong>FE 的查询规划</strong> 和 <strong>BE 的查询执行</strong>。</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="1-fe-查询规划-query-planning">1. FE 查询规划 (Query Planning)<a href="#1-fe-查询规划-query-planning" class="hash-link" aria-label="1. FE 查询规划 (Query Planning)的直接链接" title="1. FE 查询规划 (Query Planning)的直接链接">​</a></h2>
+<p>当一个 SQL 查询请求到达 FE 时，FE 作为集群的“大脑”，负责将其从一段文本转化为一个高效的、分布式的物理执行计划。</p>
+<div></div>
+<ol>
+<li>
+<p><strong>Parser (解析器):</strong> 对 SQL 文本进行词法和语法分析，生成一个抽象 语法树 (AST)。如果 SQL 存在语法错误，此阶段会直接报错。</p>
+</li>
+<li>
+<p><strong>Analyzer (分析器):</strong> 结合元数据信息（如表、列、函数是否存在），对 AST 进行语义分析和合法性校验。例如，检查表名和列名是否正确，进行类型检查和隐式类型转换等。</p>
+</li>
+<li>
+<p><strong>Logical Planner (逻辑计划生成):</strong> 将通过分析的 AST 转化为一个树状的逻辑执行计划。这个计划由关系代数算子（如 Scan, Join, Aggregate, Sort）组成，它描述了查询需要“做什么”，但还不关心“怎么做”。</p>
+</li>
+<li>
+<p><strong>Optimizer (优化器):</strong> 这是查询性能的关键。StarRocks 采用先进的、基于 Cascades 框架的优化器，结合了<strong>基于成本的优化 (CBO)</strong> 和 <strong>基于规则的优化 (RBO)</strong>。</p>
+<ul>
+<li><strong>RBO:</strong> 应用一系列硬编码的、启发式的优化规则，例如将 <code>Filter</code> 算子尽可能地下推到 <code>Scan</code> 算子附近（谓词下推），以尽早过滤数据。</li>
+<li><strong>CBO:</strong> 根据表的统计信息（如行数、基数、数据分布直方图等），估算不同执行方式（如 Join 顺序、Join 算法）的成本，并最终选择一个成本最低的逻辑计划。这是保证复杂查询（尤其是多表 Join）性能的核心。</li>
+<li><strong>详细原理请参考 优化器原理。</strong></li>
+</ul>
+</li>
+<li>
+<p><strong>Physical Planner (物理计划生成):</strong> 将优化后的逻辑计划转化为一个分布式的物理执行计划。</p>
+<ul>
+<li>这个计划由多个 <strong>Fragment</strong> 组成。一个 Fragment 是一组可以在单个 BE 节点上执行的任务单元。</li>
+<li>物理计划器会决定具体的算子实现（如使用 Hash Join 还是 Broadcast Join），并确定数据在不同 BE 节点间的交换方式（Data Exchange），如 Shuffle（重分布）或 Broadcast（广播）。</li>
+</ul>
+</li>
+</ol>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="2-be-查询执行-query-execution">2. BE 查询执行 (Query Execution)<a href="#2-be-查询执行-query-execution" class="hash-link" aria-label="2. BE 查询执行 (Query Execution)的直接链接" title="2. BE 查询执行 (Query Execution)的直接链接">​</a></h2>
+<p>FE 将物理计划分发给 BE 节点后，BE 作为“四肢”，负责具体的数据处理和计算。</p>
+<div></div>
+<ol>
+<li>
+<p><strong>Coordinator (协调节点):</strong> FE 会选择一个 BE 节点作为查询的协调者 (Coordinator)。它负责接收完整的查询计划，并将子任务 (Fragment) 分发给其他 BE 节点（Executor）。</p>
+</li>
+<li>
+<p><strong>Fragment 执行:</strong> 每个 BE 节点根据分配到的 Fragment，创建执行引擎来处理任务。底层的叶子节点 Fragment 通常负责扫描本地数据。</p>
+</li>
+<li>
+<p><strong>向量化执行引擎:</strong> StarRocks 的核心优势在于其<strong>向量化执行引擎</strong>。</p>
+<ul>
+<li>它不是按行 (Row by Row) 处理数据，而是按列、按批次（通常是几千行，形成一个 Chunk）进行处理。</li>
+<li>通过 CPU 的 SIMD (Single Instruction, Multiple Data) 指令（如 AVX2），可以在一个 CPU 周期内完成对一批数据的计算，极大地减少了 CPU 指令数和虚函数调用开销，从而实现数量级的性能提升。</li>
+</ul>
+</li>
+<li>
+<p><strong>Pipeline 调度与执行 (v3.0+):</strong>
+StarRocks 3.0 引入了 Pipeline 执行引擎，这是对传统火山模型的重大革新，旨在最大化并行能力和 CPU 利用率。</p>
+<ul>
+<li><strong>Pipeline 的划分:</strong> 一个物理计划（Fragment）会被<strong>阻塞算子</strong>（Pipeline Breaker）切分成若干个 Pipeline。典型的阻塞算子包括 <code>Hash Join</code> 的构建（Build）端、<code>Aggregate</code> 的构建端等，因为它们需要等待所有输入数据都到达后才能继续处理。非阻塞算子（如 <code>Scan</code>, <code>Filter</code>, <code>Project</code>）则会和下游算子组成一个 Pipeline。</li>
+<li><strong>Pipeline Driver:</strong> 每个 Pipeline 对应一个可执行的 <strong>Pipeline Driver</strong>。一个 Driver 就是一个独立的、可调度的执行单元。</li>
+<li><strong>线程池调度模型:</strong> StarRocks 维护一个全局的、固定大小的线程池来执行所有的 Pipeline Driver。<!-- -->
+<ol>
+<li>当一个查询开始时，其所有可执行的 Driver 会被放入一个就绪队列（Ready Queue）。</li>
+<li>线程池中的线程会从队列中取出 Driver 并执行。</li>
+<li>Driver 会一直执行，直到：<!-- -->
+<ul>
+<li><strong>处理完一个数据块 (Chunk):</strong> 执行一小段时间后，主动让出（yield）CPU，以便其他 Driver 有机会执行，保证公平性。</li>
+<li><strong>遇到阻塞:</strong> 如果算子需要等待 I/O（如读取磁盘）或网络数据，Driver 会进入阻塞状态，并<strong>立即让出线程</strong>。</li>
+</ul>
+</li>
+<li>当阻塞的条件满足后（如数据已到达），Driver 会被重新放回就绪队列，等待下一次被线程池调度。</li>
+</ol>
+</li>
+<li><strong>核心优势:</strong> 这种“让出-调度”的机制，避免了传统模型中一个线程绑定一个查询（或一个 Fragment）的模式。它使得少数几个线程就能高效地驱动大量并发查询，只要有任何一个 Driver 是可执行的，CPU 就不会空闲。这极大地提升了系统的吞吐量和并发能力，尤其是在混合负载场景下。</li>
+</ul>
+</li>
+<li>
+<p><strong>数据交换 (Data Exchange):</strong>
+不同 BE 节点上的 Fragment 执行结果需要通过网络进行交换。例如，在 Shuffle Join 中，数据会根据 Join Key 被重新哈希分布到指定的 BE 节点上进行 Join 计算。</p>
+</li>
+<li>
+<p><strong>结果汇聚:</strong>
+最终的计算结果由 Coordinator 节点汇聚，然后返回给 FE，FE 再将其返回给客户端。</p>
+</li>
+</ol>
+<hr>
+<p>参考资料: StarRocks 技术 内幕：<a href="https://zhuanlan.zhihu.com/p/588406885" target="_blank" rel="noopener noreferrer">查询原理浅析</a></p></div></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="文件选项卡"><a class="pagination-nav__link pagination-nav__link--prev" href="/docs/principles"><div class="pagination-nav__sublabel">上一页</div><div class="pagination-nav__label">StarRocks 原理</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/docs/principles/data_ingestion"><div class="pagination-nav__sublabel">下一页</div><div class="pagination-nav__label">数据导入原理</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#1-fe-查询规划-query-planning" class="table-of-contents__link toc-highlight">1. FE 查询规划 (Query Planning)</a></li><li><a href="#2-be-查询执行-query-execution" class="table-of-contents__link toc-highlight">2. BE 查询执行 (Query Execution)</a></li></ul></div></div></div></div></main></div></div></div></div>
+</body>
+</html>
