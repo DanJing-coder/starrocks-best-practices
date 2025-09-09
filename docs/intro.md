@@ -8,6 +8,9 @@ StarRocks 是一款高性能的分析型数据库，为了帮助用户更好地�
 
 本手册是官方文档的补充和提炼，而非替代。对于具体参数的详细解释、所有功能的完整列表以及更深入的底层原理，请务必参考 **[StarRocks 官方文档](https://docs.starrocks.io/zh/docs/introduction/StarRocks_intro/)**。
 
+[StarRocks最佳实践文档网站](https://dba.mirrorship.cn/docs/intro)
+---
+
 本系列最佳实践包含以下内容：
 
 *   **[集群规划](./using_starrocks/cluster-planning.md):** 在部署 StarRocks 之前，合理的规划是成功的一半。本章将指导您如何根据业务需求、数据量和查询负载，科学地进行容量评估、机型选择和组件布局，为构建高性能集群打下坚实的基础。
