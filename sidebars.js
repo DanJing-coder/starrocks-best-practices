@@ -67,6 +67,14 @@ module.exports = {
             'governance/query_governance',
           ],
         },
+        {
+          type: 'category',
+          label: '集群管理',
+          items: [
+            'management/scaling_sop',
+            'management/disk_sop',
+          ],
+        },
       ],
     },
     {
