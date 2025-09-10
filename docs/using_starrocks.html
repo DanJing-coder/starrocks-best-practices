@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.8.1">
 <title data-rh="true">使用与开发 | StarRocks 最佳实践手册</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://danjing-coder.github.io/docs/using_starrocks"><meta data-rh="true" property="og:locale" content="zh_Hans"><meta data-rh="true" name="docusaurus_locale" content="zh-Hans"><meta data-rh="true" name="docsearch:language" content="zh-Hans"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="使用与开发 | StarRocks 最佳实践手册"><meta data-rh="true" name="description" content="本章将指导您如何将数据导入 StarRocks，如何设计高效的数据模型，以及如何通过各种工具和语言与 StarRocks 进行交互，充分发挥其强大的数据分析能力。"><meta data-rh="true" property="og:description" content="本章将指导您如何将数据导入 StarRocks，如何设计高效的数据模型，以及如何通过各种工具和语言与 StarRocks 进行交互，充分发挥其强大的数据分析能力。"><link data-rh="true" rel="canonical" href="https://danjing-coder.github.io/docs/using_starrocks"><link data-rh="true" rel="alternate" href="https://danjing-coder.github.io/docs/using_starrocks" hreflang="zh-Hans"><link data-rh="true" rel="alternate" href="https://danjing-coder.github.io/docs/using_starrocks" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"使用与开发","item":"https://danjing-coder.github.io/docs/using_starrocks/"}]}</script><link rel="stylesheet" href="/assets/css/styles.c70b19cb.css">
-<script src="/assets/js/runtime~main.87fe96bf.js" defer="defer"></script>
-<script src="/assets/js/main.def23d9e.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.56f73fd2.js" defer="defer"></script>
+<script src="/assets/js/main.929ea893.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
 <svg xmlns="http://www.w3.org/2000/svg" style="display: none;"><defs>
@@ -24,10 +24,19 @@
 <p><strong><a href="/docs/using_starrocks/materialized_view">物化视图</a>:</strong> 学习如何使用 StarRocks 的智能物化视图来自动加速查询、简化 ETL 流程，实现数据模型的增量更新。</p>
 </li>
 <li>
+<p><strong><a href="/docs/using_starrocks/etl-processing">ETL/ELT 场景最佳实践</a>:</strong> 了解如何利用 StarRocks 的计算能力和物化视图构建库内 ETL/ELT 管道，并对大规模数据处理任务进行资源管控。</p>
+</li>
+<li>
+<p><strong><a href="/docs/using_starrocks/real-time-analytics">实时分析场景最佳实践</a>:</strong> 学习如何构建端到端秒级延迟的实时分析应用，涵盖数据建模、实时导入和查询加速。</p>
+</li>
+<li>
+<p><strong><a href="/docs/using_starrocks/high-concurrency">高并发场景最佳实践</a>:</strong> 介绍如何通过建模、物化视图、架构设计等手段，满足高 QPS、低延迟的查询需求。</p>
+</li>
+<li>
 <p><strong><a href="/docs/using_starrocks/connector">集群接入与数据导入</a>:</strong> 介绍如何通过 JDBC、反向代理等方式接入集群，以及如何使用 Flink Connector、Stream Load 等工具高效地导入数据。</p>
 </li>
 <li>
-<p><strong><a href="/docs/using_starrocks/usage">集群使用规范</a>:</strong> 涵盖数  据导入、查询优化、例行运维等方面的使用建议。遵循这些规范，可以有效提升集群的整体性能和稳定性，避免因不当使用导致的问题。</p>
+<p><strong><a href="/docs/using_starrocks/usage">集群使用规范</a>:</strong> 涵盖数据导入、查询优化、例行运维等方面的使用建议。遵循这些规范，可以有效提升集群的整体性能和稳定性，避免因不当使用导致的问题。</p>
 </li>
 </ul></div></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="文件选项卡"><a class="pagination-nav__link pagination-nav__link--prev" href="/docs/deployment/shared_nothing"><div class="pagination-nav__sublabel">上一页</div><div class="pagination-nav__label">存算一体 (Shared-nothing)</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/docs/using_starrocks/onboarding"><div class="pagination-nav__sublabel">下一页</div><div class="pagination-nav__label">StarRocks 业务接入方案</div></a></nav></div></div></div></div></main></div></div></div></div>
 </body>
