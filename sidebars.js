@@ -40,6 +40,9 @@ module.exports = {
             'using_starrocks/usage',
             'using_starrocks/materialized_view',
             'using_starrocks/configuration',
+            'using_starrocks/etl-processing',
+            'using_starrocks/real-time-analytics',
+            'using_starrocks/high-concurrency',
           ],
         },
         {
