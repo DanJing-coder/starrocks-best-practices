@@ -104,7 +104,7 @@ graph TD
 #### 3.3 查询逻辑与应用开发
 
 *   **应用接入:** 业务应用通过 [JDBC](../using_starrocks/connector.md#jdbc-连接) 连接 StarRocks。请务必使用连接池（如 Druid, HikariCP）并进行合理配置。
-*   **SQL 开发:** 编写业务查询 SQL。对于复杂查询，使用 `EXPLAIN` 分析执行计划，确保其高效。
+*   **SQL 开发:** 编写业务查询 SQL。对于复杂查询，使用 `EXPLAIN COSTS` 分析执行计划，确保其高效。
 
 #### 3.4 功能与性能测试
 
@@ -112,7 +112,7 @@ graph TD
 *   **性能测试:**
     *   使用 JMeter 等工具，模拟生产环境的并发度和 QPS 进行压测。
     *   重点监控查询 P99 延迟和集群资源使用率（CPU, 内存, IO）。
-    *   对于不达标的慢查询，结合 `EXPLAIN` 和 Query Profile 进行调优。
+    *   对于不达标的慢查询，结合 `EXPLAIN COSTS` 和 Query Profile 进行调优。
 
 ### 阶段四：上线与运维
 
