@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.8.1">
 <title data-rh="true">集群使用规范 | StarRocks 最佳实践手册</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://danjing-coder.github.io/docs/using_starrocks/usage"><meta data-rh="true" property="og:locale" content="zh_Hans"><meta data-rh="true" name="docusaurus_locale" content="zh-Hans"><meta data-rh="true" name="docsearch:language" content="zh-Hans"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="集群使用规范 | StarRocks 最佳实践手册"><meta data-rh="true" name="description" content="为了保障 StarRocks 集群的稳定性、性能和多租户环境下的公平性，所有用户都应遵循本章提出的使用规范。这些规范涵盖了数据导入、查询编写和日常操作等多个方面，旨在帮助您更高效、更安全地使用 StarRocks。"><meta data-rh="true" property="og:description" content="为了保障 StarRocks 集群的稳定性、性能和多租户环境下的公平性，所有用户都应遵循本章提出的使用规范。这些规范涵盖了数据导入、查询编写和日常操作等多个方面，旨在帮助您更高效、更安全地使用 StarRocks。"><link data-rh="true" rel="canonical" href="https://danjing-coder.github.io/docs/using_starrocks/usage"><link data-rh="true" rel="alternate" href="https://danjing-coder.github.io/docs/using_starrocks/usage" hreflang="zh-Hans"><link data-rh="true" rel="alternate" href="https://danjing-coder.github.io/docs/using_starrocks/usage" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"使用与开发","item":"https://danjing-coder.github.io/docs/using_starrocks/"},{"@type":"ListItem","position":2,"name":"集群使用规范","item":"https://danjing-coder.github.io/docs/using_starrocks/usage"}]}</script><link rel="stylesheet" href="/assets/css/styles.c70b19cb.css">
-<script src="/assets/js/runtime~main.2d2cb184.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.87fe96bf.js" defer="defer"></script>
 <script src="/assets/js/main.def23d9e.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -17,7 +17,7 @@
 <p>不合理的导入策略是导致集群性能问题（尤其是 Compaction 压力过大）的最常见原因。</p>
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="11-避免高频小批量导入">1.1 避免高频小批量导入<a href="#11-避免高频小批量导入" class="hash-link" aria-label="1.1 避免高频小批量导入的直接链接" title="1.1 避免高频小批量导入的直接链接">​</a></h3>
 <ul>
-<li><strong>核心原则:</strong> <strong>“合并批次，降低频率”</strong>。</li>
+<li><strong>核心原则:</strong> <strong>&quot;合并批次，降低频率&quot;</strong>。</li>
 <li><strong>主键模型:</strong> 严禁进行毫秒级的持续导入。高频写入会产生大量的小版本文件，给后台 Compaction 带来巨大压力，导致 CPU 和 I/O 飙升。<!-- -->
 <ul>
 <li><strong>推荐实践:</strong> 在上游（如 Flink）进行微批处理，将导入频率控制在<strong>秒级</strong>（例如 3-5 秒一次），并确保每个批次有一定的数据量（如数万行）。</li>
@@ -88,14 +88,14 @@
 </ul>
 </li>
 </ul>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="24-使用-explain-分析执行计划">2.4 使用 <code>EXPLAIN</code> 分析执行计划<a href="#24-使用-explain-分析执行计划" class="hash-link" aria-label="24-使用-explain-分析执行计划的直接链接" title="24-使用-explain-分析执行计划的直接链接">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="24-使用-explain-costs-分析执行计划">2.4 使用 <code>EXPLAIN COSTS</code> 分析执行计划<a href="#24-使用-explain-costs-分析执行计划" class="hash-link" aria-label="24-使用-explain-costs-分析执行计划的直接链接" title="24-使用-explain-costs-分析执行计划的直接链接">​</a></h3>
 <ul>
-<li><strong>核心原则:</strong> 对于任何不符合预期的慢查询，第一步都应该是 <code>EXPLAIN</code>。</li>
-<li><strong>作用:</strong> <code>EXPLAIN</code> 可以展示查询的逻辑计划和物理计划，帮助你理解 StarRocks 是如何执行你的 SQL 的。</li>
+<li><strong>核心原则:</strong> 对于任何不符合预期的慢查询，第一步都应该是 <code>EXPLAIN COSTS</code>。</li>
+<li><strong>作用:</strong> <code>EXPLAIN COSTS</code> 可以展示查询的逻辑计划和物理计划，帮助你理解 StarRocks 是如何执行你的 SQL 的。</li>
 <li><strong>关注点:</strong>
 <ul>
 <li><strong><code>scan</code> 算子:</strong> 查看 <code>predicates</code> 是否被成功下推，<code>partitions</code> 是否被有效裁剪。</li>
-<li><strong><code>join</code> 算子:</strong> 查看 Join 类型（如 <code>HASH_JOIN</code>, <code>BROADCAST_JOIN</code>）和数据交换方式（<code>SHUFFLE</code>, <code>BROADCAST</code>）。</li>
+<li><strong><code>join</code> 算子:</strong> 查看数据交换方式（<code>SHUFFLE</code>, <code>BROADCAST</code>）。</li>
 <li><strong>估算行数:</strong> 检查优化器估算的行数与实际行数是否有巨大偏差，这可能意味着统计信息过时。</li>
 </ul>
 </li>
@@ -103,7 +103,7 @@
 <h3 class="anchor anchorWithStickyNavbar_LWe7" id="25-小心使用-update-和-delete">2.5 小心使用 UPDATE 和 DELETE<a href="#25-小心使用-update-和-delete" class="hash-link" aria-label="2.5 小心使用 UPDATE 和 DELETE的直接链接" title="2.5 小心使用 UPDATE 和 DELETE的直接链接">​</a></h3>
 <p>StarRocks 的主键模型支持 <code>UPDATE</code> 和 <code>DELETE</code> 操作，但这两种操作在 OLAP 环境中是昂贵的，应谨慎使用。</p>
 <ul>
-<li><strong>适用模型:</strong> <code>UPDATE</code> 和 <code>DELETE</code> 仅对<strong>主键模型</strong>生效。</li>
+<li><strong>适用模型:</strong> <code>UPDATE</code> 和 <code>DELETE</code> 仅对<strong>主 键模型</strong>生效。</li>
 <li><strong>性能开销:</strong>
 <ul>
 <li>其底层实现为“先标记删除，再插入新行”(Delete-and-Insert)，会产生新的数据版本并增加 Compaction 压力。</li>
@@ -136,7 +136,7 @@
 <li><strong>用户与权限:</strong>
 <ul>
 <li>遵循最小权限原则，为不同的业务角色创建不同的用户，并授予其所需的最小权限集。</li>
-<li>不建议在生产环境中使用 <code>root</code> 账号进行日常查询和开发。</li>
+<li>不建议在生产环境中使用 <code>root</code> 账号进  行日常查询和开发。</li>
 </ul>
 </li>
 <li><strong>会话变量:</strong>
@@ -144,6 +144,6 @@
 <li>对于临时的大查询，应在当前会话中使用 <code>SET</code> 命令来调整参数（如 <code>SET exec_mem_limit = ...</code>），而不是修改全局配置，避免影响其他用户。</li>
 </ul>
 </li>
-</ul></div></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="文件选项卡"><a class="pagination-nav__link pagination-nav__link--prev" href="/docs/using_starrocks/connector"><div class="pagination-nav__sublabel">上一页</div><div class="pagination-nav__label">集群接入与数据导入</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/docs/using_starrocks/materialized_view"><div class="pagination-nav__sublabel">下一页</div><div class="pagination-nav__label">StarRocks 最佳实践之物化视图</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#1-数据导入规范" class="table-of-contents__link toc-highlight">1. 数据导入规范</a><ul><li><a href="#11-避免高频小批量导入" class="table-of-contents__link toc-highlight">1.1 避免高频小批量导入</a></li><li><a href="#12-使用唯一的导入标签-label" class="table-of-contents__link toc-highlight">1.2 使用唯一的导入标签 (Label)</a></li><li><a href="#13-关注数据质量" class="table-of-contents__link toc-highlight">1.3 关注数据质量</a></li></ul></li><li><a href="#2-查询规范" class="table-of-contents__link toc-highlight">2. 查询规范</a><ul><li><a href="#21-明确指定查询列" class="table-of-contents__link toc-highlight">2.1 明确指定查询列</a></li><li><a href="#22-高效使用过滤条件" class="table-of-contents__link toc-highlight">2.2 高效使用过滤条件</a></li><li><a href="#23-小心处理大数据量-join" class="table-of-contents__link toc-highlight">2.3 小心处理大数据量 Join</a></li><li><a href="#24-使用-explain-分析执行计划" class="table-of-contents__link toc-highlight">2.4 使用 <code>EXPLAIN</code> 分析执行计划</a></li><li><a href="#25-小心使用-update-和-delete" class="table-of-contents__link toc-highlight">2.5 小心使用 UPDATE 和 DELETE</a></li></ul></li><li><a href="#3-日常操作规范" class="table-of-contents__link toc-highlight">3. 日常操作规范</a></li></ul></div></div></div></div></main></div></div></div></div>
+</ul></div></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="文件选项卡"><a class="pagination-nav__link pagination-nav__link--prev" href="/docs/using_starrocks/connector"><div class="pagination-nav__sublabel">上一页</div><div class="pagination-nav__label">集群接入与数据导入</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/docs/using_starrocks/materialized_view"><div class="pagination-nav__sublabel">下一页</div><div class="pagination-nav__label">StarRocks 最佳实践之物化视图</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#1-数据导入规范" class="table-of-contents__link toc-highlight">1. 数据导入规范</a><ul><li><a href="#11-避免高频小批量导入" class="table-of-contents__link toc-highlight">1.1 避免高频小批量导入</a></li><li><a href="#12-使用唯一的导入标签-label" class="table-of-contents__link toc-highlight">1.2 使用唯一的导入标签 (Label)</a></li><li><a href="#13-关注数据质量" class="table-of-contents__link toc-highlight">1.3 关注数据质量</a></li></ul></li><li><a href="#2-查询规范" class="table-of-contents__link toc-highlight">2. 查询规范</a><ul><li><a href="#21-明确指定查询列" class="table-of-contents__link toc-highlight">2.1 明确指定查询列</a></li><li><a href="#22-高效使用过滤条件" class="table-of-contents__link toc-highlight">2.2 高效使用过滤条件</a></li><li><a href="#23-小心处理大数据量-join" class="table-of-contents__link toc-highlight">2.3 小心处理大数据量 Join</a></li><li><a href="#24-使用-explain-costs-分析执行计划" class="table-of-contents__link toc-highlight">2.4 使用 <code>EXPLAIN COSTS</code> 分析执行计划</a></li><li><a href="#25-小心使用-update-和-delete" class="table-of-contents__link toc-highlight">2.5 小心使用 UPDATE 和 DELETE</a></li></ul></li><li><a href="#3-日常操作规范" class="table-of-contents__link toc-highlight">3. 日常操作规范</a></li></ul></div></div></div></div></main></div></div></div></div>
 </body>
 </html>
